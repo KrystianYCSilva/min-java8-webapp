@@ -3,11 +3,12 @@
     <style src="/css/pdf-like.css"/>
 
     <window id="winHome" apply="br.gov.inep.censo.web.zk.home.HomeComposer"
-            border="normal" width="900px" sclass="sheet" position="center,top">
+            border="normal" width="900px" sclass="sheet" position="center,top"
+            hflex="min" vflex="min">
         <vbox spacing="10px" width="100%">
             <label value="Documento Oficial" sclass="official-tag"/>
             <label value="Censo da Educacao Superior 2025" style="font-size:28px;font-weight:bold;"/>
-            <label value="Versao 2.0.0 - Frontend ZK 3.6.2 em padrao MVC"/>
+            <label value="Versao 2.0.0 - Frontend ZK 8.6 em padrao MVC"/>
 
             <label id="lblFlash" sclass="ok" visible="false"/>
 
@@ -18,7 +19,7 @@
                 <button id="btnMenu" label="Ir para Menu (requer login)" sclass="btn-outline"/>
             </hbox>
 
-            <label value="Stack: Tomcat 6/7, Java 6, Servlet 2.5, Hibernate/JPA e ZK 3.6.2." sclass="footer-note"/>
+            <label value="Stack: Tomcat 8+, Java 8, Servlet 3.1, Hibernate/JPA e ZK 8.6 com tema IceBlue Compact." sclass="footer-note"/>
         </vbox>
     </window>
 </zk>

@@ -3,7 +3,8 @@
     <style src="/css/pdf-like.css"/>
 
     <window id="winAlunoList" apply="br.gov.inep.censo.web.zk.modulo.AlunoComposer"
-            border="normal" width="100%" sclass="sheet" position="center,top">
+            border="normal" width="100%" sclass="sheet" position="center,top"
+            vflex="1">
         <vbox spacing="10px" width="100%">
             <label value="Aluno" sclass="official-tag"/>
             <label value="Listagem de Alunos (Registro 41)" style="font-size:22px;font-weight:bold;"/>

@@ -3,7 +3,8 @@
     <style src="/css/pdf-like.css"/>
 
     <window id="winLogin" apply="br.gov.inep.censo.web.zk.auth.LoginComposer"
-            border="normal" width="560px" sclass="sheet" position="center,top">
+            border="normal" width="560px" sclass="sheet" position="center,top"
+            hflex="min" vflex="min">
         <vbox spacing="10px" width="100%">
             <label value="Acesso Restrito" sclass="official-tag"/>
             <label value="Autenticacao do Usuario" style="font-size:22px;font-weight:bold;"/>

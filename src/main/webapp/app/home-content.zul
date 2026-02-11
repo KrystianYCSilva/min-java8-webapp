@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <zk>
     <window id="winDashboard" apply="br.gov.inep.censo.web.zk.home.DashboardComposer"
-            border="normal" width="100%" sclass="sheet">
+            border="normal" width="100%" sclass="sheet" vflex="1">
         <vbox spacing="12px" width="100%">
             <label value="Home" sclass="official-tag"/>
             <label value="Painel Inicial" style="font-size:24px;font-weight:bold;"/>

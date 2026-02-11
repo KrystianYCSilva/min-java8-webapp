@@ -18,4 +18,22 @@
         <name>org.zkoss.zk.ui.checkClassWebResource</name>
         <value>false</value>
     </library-property>
+
+    <!-- ZK 8 Theme Configuration: IceBlue Compact (Bootstrap-style) -->
+    <library-property>
+        <name>org.zkoss.theme.preferred</name>
+        <value>iceblue_c</value>
+    </library-property>
+
+    <!-- Enable responsive design -->
+    <library-property>
+        <name>org.zkoss.zul.grid.autofitWidth</name>
+        <value>true</value>
+    </library-property>
+
+    <!-- Enable modern look & feel -->
+    <library-property>
+        <name>org.zkoss.zul.listbox.checkmarkDeselectOthers</name>
+        <value>false</value>
+    </library-property>
 </zk>
