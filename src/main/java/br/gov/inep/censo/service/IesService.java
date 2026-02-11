@@ -1,17 +1,18 @@
 package br.gov.inep.censo.service;
 
-import br.gov.inep.censo.dao.IesDAO;
-import br.gov.inep.censo.dao.LayoutCampoDAO;
-import br.gov.inep.censo.dao.MunicipioDAO;
 import br.gov.inep.censo.domain.ModulosLayout;
 import br.gov.inep.censo.model.Ies;
 import br.gov.inep.censo.repository.IesRepository;
+import br.gov.inep.censo.repository.LayoutCampoValueRepository;
+import br.gov.inep.censo.repository.MunicipioRepository;
+import br.gov.inep.censo.spring.SpringBridge;
 import br.gov.inep.censo.util.ValidationUtils;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
-import org.springframework.web.context.ContextLoader;
-import org.springframework.web.context.WebApplicationContext;
+import org.springframework.transaction.PlatformTransactionManager;
 
+import javax.persistence.EntityManager;
+import javax.persistence.EntityManagerFactory;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
@@ -21,32 +22,51 @@ import java.util.Map;
  */
 public class IesService {
 
-    private final IesDAO iesDAO;
-    private final LayoutCampoDAO layoutCampoDAO;
-    private final MunicipioDAO municipioDAO;
+    private final LayoutCampoValueRepository layoutCampoValueRepository;
     private final IesRepository iesRepository;
+    private final MunicipioRepository municipioRepository;
+    private final PlatformTransactionManager transactionManager;
+    private final EntityManagerFactory entityManagerFactory;
 
     public IesService() {
-        this(new IesDAO(), new LayoutCampoDAO(), new MunicipioDAO(), resolveRepository());
+        this(new LayoutCampoValueRepository(),
+                SpringBridge.getBean(IesRepository.class),
+                SpringBridge.getBean(MunicipioRepository.class),
+                SpringBridge.getBean(PlatformTransactionManager.class),
+                SpringBridge.getBean(EntityManagerFactory.class));
     }
 
-    public IesService(IesDAO iesDAO, LayoutCampoDAO layoutCampoDAO, MunicipioDAO municipioDAO) {
-        this(iesDAO, layoutCampoDAO, municipioDAO, null);
-    }
-
-    public IesService(IesDAO iesDAO,
-                      LayoutCampoDAO layoutCampoDAO,
-                      MunicipioDAO municipioDAO,
-                      IesRepository iesRepository) {
-        this.iesDAO = iesDAO;
-        this.layoutCampoDAO = layoutCampoDAO;
-        this.municipioDAO = municipioDAO;
+    public IesService(LayoutCampoValueRepository layoutCampoValueRepository,
+                      IesRepository iesRepository,
+                      MunicipioRepository municipioRepository,
+                      PlatformTransactionManager transactionManager,
+                      EntityManagerFactory entityManagerFactory) {
+        this.layoutCampoValueRepository = layoutCampoValueRepository;
         this.iesRepository = iesRepository;
+        this.municipioRepository = municipioRepository;
+        this.transactionManager = transactionManager;
+        this.entityManagerFactory = entityManagerFactory;
     }
 
     public Long cadastrar(Ies ies, Map<Long, String> camposComplementares) throws SQLException {
         validar(ies);
-        return iesDAO.salvar(ies, camposComplementares);
+        if (canUseRepositoryWritePath()) {
+            final Ies iesFinal = ies;
+            final Map<Long, String> camposFinal = camposComplementares;
+            return SpringBridge.inTransaction(transactionManager, entityManagerFactory,
+                    new SpringBridge.SqlWork<Long>() {
+                        public Long execute(EntityManager entityManager) throws SQLException {
+                            Ies salvo = iesRepository.save(iesFinal);
+                            Long iesId = salvo != null ? salvo.getId() : iesFinal.getId();
+                            if (iesId == null) {
+                                throw new SQLException("Falha ao gerar ID para IES.");
+                            }
+                            layoutCampoValueRepository.salvarValoresIes(entityManager, iesId, camposFinal);
+                            return iesId;
+                        }
+                    }, "Falha ao cadastrar ies via repository.");
+        }
+        throw new SQLException("Infraestrutura Spring Data/Transaction indisponivel para cadastrar IES.");
     }
 
     public void atualizar(Ies ies, Map<Long, String> camposComplementares) throws SQLException {
@@ -54,7 +74,20 @@ public class IesService {
         if (ies.getId() == null) {
             throw new IllegalArgumentException("ID da IES e obrigatorio para alteracao.");
         }
-        iesDAO.atualizar(ies, camposComplementares);
+        if (canUseRepositoryWritePath()) {
+            final Ies iesFinal = ies;
+            final Map<Long, String> camposFinal = camposComplementares;
+            SpringBridge.inTransaction(transactionManager, entityManagerFactory,
+                    new SpringBridge.SqlWork<Void>() {
+                        public Void execute(EntityManager entityManager) throws SQLException {
+                            iesRepository.save(iesFinal);
+                            layoutCampoValueRepository.substituirValoresIes(entityManager, iesFinal.getId(), camposFinal);
+                            return null;
+                        }
+                    }, "Falha ao atualizar ies via repository.");
+            return;
+        }
+        throw new SQLException("Infraestrutura Spring Data/Transaction indisponivel para atualizar IES.");
     }
 
     public Ies buscarPorId(Long id) throws SQLException {
@@ -68,7 +101,7 @@ public class IesService {
                 throw toSqlException("Falha ao buscar ies via repository.", e);
             }
         }
-        return iesDAO.buscarPorId(id);
+        throw new SQLException("IesRepository indisponivel para buscar por ID.");
     }
 
     public List<Ies> listar() throws SQLException {
@@ -79,7 +112,7 @@ public class IesService {
                 throw toSqlException("Falha ao listar ies via repository.", e);
             }
         }
-        return iesDAO.listar();
+        throw new SQLException("IesRepository indisponivel para listagem.");
     }
 
     public List<Ies> listarPaginado(int pagina, int tamanhoPagina) throws SQLException {
@@ -93,7 +126,7 @@ public class IesService {
                 throw toSqlException("Falha ao listar ies paginadas via repository.", e);
             }
         }
-        return iesDAO.listarPaginado(pagina, tamanhoPagina);
+        throw new SQLException("IesRepository indisponivel para listagem paginada.");
     }
 
     public int contar() throws SQLException {
@@ -105,15 +138,32 @@ public class IesService {
                 throw toSqlException("Falha ao contar ies via repository.", e);
             }
         }
-        return iesDAO.contar();
+        throw new SQLException("IesRepository indisponivel para contagem.");
     }
 
     public void excluir(Long id) throws SQLException {
-        iesDAO.excluir(id);
+        if (id == null) {
+            return;
+        }
+        if (canUseRepositoryWritePath()) {
+            final Long idFinal = id;
+            SpringBridge.inTransaction(transactionManager, entityManagerFactory,
+                    new SpringBridge.SqlWork<Void>() {
+                        public Void execute(EntityManager entityManager) throws SQLException {
+                            layoutCampoValueRepository.removerValoresIes(entityManager, idFinal);
+                            if (iesRepository.exists(idFinal)) {
+                                iesRepository.delete(idFinal);
+                            }
+                            return null;
+                        }
+                    }, "Falha ao excluir ies via repository.");
+            return;
+        }
+        throw new SQLException("Infraestrutura Spring Data/Transaction indisponivel para excluir IES.");
     }
 
     public Map<Long, String> carregarCamposComplementaresPorCampoId(Long iesId) throws SQLException {
-        return iesDAO.carregarCamposComplementaresPorCampoId(iesId);
+        return layoutCampoValueRepository.carregarValoresIesPorCampoId(iesId);
     }
 
     public String exportarTodosTxtPipe() throws SQLException {
@@ -144,23 +194,15 @@ public class IesService {
         return new SQLException(mensagem, e);
     }
 
-    private static IesRepository resolveRepository() {
-        try {
-            WebApplicationContext context = ContextLoader.getCurrentWebApplicationContext();
-            if (context == null) {
-                return null;
-            }
-            return context.getBean(IesRepository.class);
-        } catch (Exception e) {
-            return null;
-        }
+    private boolean canUseRepositoryWritePath() {
+        return iesRepository != null && transactionManager != null && entityManagerFactory != null;
     }
 
     public int importarTxtPipe(String conteudo) throws SQLException {
         if (conteudo == null || conteudo.trim().length() == 0) {
             return 0;
         }
-        Map<Integer, Long> campoIdPorNumero = layoutCampoDAO.mapaCampoIdPorNumero(ModulosLayout.IES_11);
+        Map<Integer, Long> campoIdPorNumero = layoutCampoValueRepository.mapaCampoIdPorNumero(ModulosLayout.IES_11);
         String[] linhas = conteudo.split("\\r?\\n");
         int importados = 0;
         Long idIesHeader = null;
@@ -211,7 +253,7 @@ public class IesService {
     }
 
     private String exportarLinhaTxtPipe(Ies ies) throws SQLException {
-        Map<Integer, String> valores = iesDAO.carregarCamposRegistro11PorNumero(ies.getId());
+        Map<Integer, String> valores = layoutCampoValueRepository.carregarValoresIesPorNumero(ies.getId(), ModulosLayout.IES_11);
         int max = 29;
         String[] campos = new String[max];
         for (int i = 0; i < max; i++) {
@@ -283,10 +325,24 @@ public class IesService {
             if (ies.getCodigoUfLaboratorio() == null) {
                 throw new IllegalArgumentException("UF do laboratorio e obrigatoria quando municipio e informado.");
             }
-            if (!municipioDAO.existeCodigoNaUf(ies.getCodigoMunicipioLaboratorio(), ies.getCodigoUfLaboratorio())) {
+            if (!existeMunicipioNaUf(ies.getCodigoMunicipioLaboratorio(), ies.getCodigoUfLaboratorio())) {
                 throw new IllegalArgumentException("Municipio do laboratorio nao pertence a UF informada.");
             }
         }
+    }
+
+    private boolean existeMunicipioNaUf(String codigoMunicipio, Integer codigoUf) throws SQLException {
+        if (codigoMunicipio == null || codigoMunicipio.trim().length() == 0 || codigoUf == null) {
+            return false;
+        }
+        if (municipioRepository != null) {
+            try {
+                return municipioRepository.existsByCodigoAndCodigoUf(codigoMunicipio.trim(), codigoUf);
+            } catch (RuntimeException e) {
+                throw toSqlException("Falha ao validar municipio via repository.", e);
+            }
+        }
+        throw new SQLException("MunicipioRepository indisponivel para validacao.");
     }
 
     private String safeField(String[] campos, int numeroCampo) {
@@ -316,3 +372,5 @@ public class IesService {
         return Integer.valueOf(Integer.parseInt(value));
     }
 }
+
+

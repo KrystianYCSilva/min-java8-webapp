@@ -13,27 +13,10 @@ import br.gov.inep.censo.web.zk.AbstractBaseComposer;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.EventListener;
 import org.zkoss.zk.ui.event.Events;
-import org.zkoss.zul.Button;
-import org.zkoss.zul.Checkbox;
-import org.zkoss.zul.Comboitem;
-import org.zkoss.zul.Combobox;
-import org.zkoss.zul.Datebox;
-import org.zkoss.zul.Hbox;
-import org.zkoss.zul.Label;
-import org.zkoss.zul.Listcell;
-import org.zkoss.zul.Listitem;
-import org.zkoss.zul.Listbox;
-import org.zkoss.zul.Textbox;
-import org.zkoss.zul.Toolbarbutton;
-import org.zkoss.zul.Vbox;
+import org.zkoss.zul.*;
 
 import java.sql.Date;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Controller MVC do modulo Aluno (Registro 41).

@@ -7,7 +7,6 @@ import org.hibernate.jdbc.ReturningWork;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.Persistence;
-
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -21,7 +20,7 @@ import java.util.Map;
  * Fabrica central de EntityManagerFactory/EntityManager com provider Hibernate.
  *
  * Mantem compatibilidade com acesso JDBC bruto quando necessario, mas prioriza
- * o uso de EntityManager/EntityTransaction na camada DAO.
+ * o uso de EntityManager/EntityTransaction na camada de repositorios.
  */
 public final class HibernateConnectionProvider {
 

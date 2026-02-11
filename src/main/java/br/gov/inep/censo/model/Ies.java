@@ -3,13 +3,7 @@ package br.gov.inep.censo.model;
 import br.gov.inep.censo.model.enums.EstadoEnum;
 import br.gov.inep.censo.model.enums.TipoLaboratorioEnum;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.Table;
-import javax.persistence.Transient;
+import javax.persistence.*;
 import java.io.Serializable;
 import java.util.Map;
 

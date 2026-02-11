@@ -1,11 +1,9 @@
 package br.gov.inep.censo.service;
 
-import br.gov.inep.censo.dao.UsuarioDAO;
 import br.gov.inep.censo.model.Usuario;
 import br.gov.inep.censo.repository.UsuarioRepository;
+import br.gov.inep.censo.spring.SpringBridge;
 import br.gov.inep.censo.util.PasswordUtil;
-import org.springframework.web.context.ContextLoader;
-import org.springframework.web.context.WebApplicationContext;
 
 import java.sql.SQLException;
 
@@ -14,23 +12,13 @@ import java.sql.SQLException;
  */
 public class AuthService {
 
-    private final UsuarioDAO usuarioDAO;
     private final UsuarioRepository usuarioRepository;
 
     public AuthService() {
-        this(new UsuarioDAO(), resolveRepository());
-    }
-
-    public AuthService(UsuarioDAO usuarioDAO) {
-        this(usuarioDAO, null);
+        this(SpringBridge.getBean(UsuarioRepository.class));
     }
 
     public AuthService(UsuarioRepository usuarioRepository) {
-        this(new UsuarioDAO(), usuarioRepository);
-    }
-
-    public AuthService(UsuarioDAO usuarioDAO, UsuarioRepository usuarioRepository) {
-        this.usuarioDAO = usuarioDAO;
         this.usuarioRepository = usuarioRepository;
     }
 
@@ -52,7 +40,7 @@ public class AuthService {
             return autenticarComRepository(loginLimpo, senha);
         }
 
-        return usuarioDAO.autenticar(loginLimpo, senha);
+        throw new SQLException("UsuarioRepository indisponivel para autenticacao.");
     }
 
     private Usuario autenticarComRepository(String login, String senha) throws SQLException {
@@ -87,15 +75,4 @@ public class AuthService {
         }
     }
 
-    private static UsuarioRepository resolveRepository() {
-        try {
-            WebApplicationContext context = ContextLoader.getCurrentWebApplicationContext();
-            if (context == null) {
-                return null;
-            }
-            return context.getBean(UsuarioRepository.class);
-        } catch (Exception e) {
-            return null;
-        }
-    }
 }

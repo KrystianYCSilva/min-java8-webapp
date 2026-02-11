@@ -1,8 +1,10 @@
-package br.gov.inep.censo.dao;
+package br.gov.inep.censo.repository;
 
 import br.gov.inep.censo.model.LayoutCampo;
+import br.gov.inep.censo.spring.SpringBridge;
 
 import javax.persistence.EntityManager;
+import javax.persistence.EntityManagerFactory;
 import javax.persistence.Query;
 import javax.persistence.TypedQuery;
 import java.sql.SQLException;
@@ -11,9 +13,23 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * DAO para metadados de leiaute e valores complementares de campos.
+ * Repositorio custom para metadados de leiaute e valores complementares.
  */
-public class LayoutCampoDAO extends AbstractJpaDao {
+public class LayoutCampoValueRepository {
+
+    private final EntityManagerFactory entityManagerFactory;
+
+    private interface EntityManagerWork<T> {
+        T execute(EntityManager entityManager) throws SQLException;
+    }
+
+    public LayoutCampoValueRepository() {
+        this(SpringBridge.getBean(EntityManagerFactory.class));
+    }
+
+    public LayoutCampoValueRepository(EntityManagerFactory entityManagerFactory) {
+        this.entityManagerFactory = entityManagerFactory;
+    }
 
     public List<LayoutCampo> listarPorModulo(final String modulo) throws SQLException {
         return executeInEntityManager(new EntityManagerWork<List<LayoutCampo>>() {
@@ -291,5 +307,44 @@ public class LayoutCampoDAO extends AbstractJpaDao {
             return Integer.valueOf(((Number) value).intValue());
         }
         return Integer.valueOf(value.toString());
+    }
+
+    private <T> T executeInEntityManager(EntityManagerWork<T> work) throws SQLException {
+        if (entityManagerFactory == null) {
+            throw new SQLException("EntityManagerFactory indisponivel para LayoutCampoValueRepository.");
+        }
+        EntityManager entityManager = null;
+        try {
+            entityManager = entityManagerFactory.createEntityManager();
+            return work.execute(entityManager);
+        } catch (SQLException e) {
+            throw e;
+        } catch (RuntimeException e) {
+            throw toSqlException("Falha ao executar operacao de layout.", e);
+        } finally {
+            if (entityManager != null) {
+                try {
+                    entityManager.close();
+                } catch (RuntimeException ignored) {
+                    // noop
+                }
+            }
+        }
+    }
+
+    private SQLException toSqlException(String message, RuntimeException e) {
+        Throwable cause = e.getCause();
+        if (cause instanceof SQLException) {
+            return (SQLException) cause;
+        }
+        return new SQLException(message, e);
+    }
+
+    private String trimToNull(String value) {
+        if (value == null) {
+            return null;
+        }
+        String trimmed = value.trim();
+        return trimmed.length() == 0 ? null : trimmed;
     }
 }

@@ -2,26 +2,13 @@ package br.gov.inep.censo.web.zk.modulo;
 
 import br.gov.inep.censo.domain.CategoriasOpcao;
 import br.gov.inep.censo.domain.ModulosLayout;
-import br.gov.inep.censo.model.Aluno;
-import br.gov.inep.censo.model.Curso;
-import br.gov.inep.censo.model.CursoAluno;
-import br.gov.inep.censo.model.LayoutCampo;
-import br.gov.inep.censo.model.OpcaoDominio;
+import br.gov.inep.censo.model.*;
 import br.gov.inep.censo.service.AlunoService;
 import br.gov.inep.censo.service.CatalogoService;
 import br.gov.inep.censo.service.CursoAlunoService;
 import br.gov.inep.censo.service.CursoService;
 import br.gov.inep.censo.web.zk.AbstractBaseComposer;
-import org.zkoss.zul.Checkbox;
-import org.zkoss.zul.Comboitem;
-import org.zkoss.zul.Combobox;
-import org.zkoss.zul.Hbox;
-import org.zkoss.zul.Label;
-import org.zkoss.zul.Listbox;
-import org.zkoss.zul.Listcell;
-import org.zkoss.zul.Listitem;
-import org.zkoss.zul.Textbox;
-import org.zkoss.zul.Vbox;
+import org.zkoss.zul.*;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;

@@ -1,10 +1,10 @@
-package br.gov.inep.censo.dao;
+package br.gov.inep.censo.repository;
 
-import br.gov.inep.censo.model.OpcaoDominio;
+import br.gov.inep.censo.spring.SpringBridge;
 
 import javax.persistence.EntityManager;
+import javax.persistence.EntityManagerFactory;
 import javax.persistence.Query;
-import javax.persistence.TypedQuery;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -12,20 +12,22 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * DAO de catalogo de opcoes e vinculos 1..N por modulo.
+ * Repositorio custom para vinculos 1..N de opcoes de dominio por modulo.
  */
-public class OpcaoDAO extends AbstractJpaDao {
+public class OpcaoVinculoRepository {
 
-    public List<OpcaoDominio> listarPorCategoria(final String categoria) throws SQLException {
-        return executeInEntityManager(new EntityManagerWork<List<OpcaoDominio>>() {
-            public List<OpcaoDominio> execute(EntityManager entityManager) {
-                TypedQuery<OpcaoDominio> query = entityManager.createQuery(
-                        "select o from OpcaoDominio o where o.categoria = :categoria order by o.nome",
-                        OpcaoDominio.class);
-                query.setParameter("categoria", categoria);
-                return query.getResultList();
-            }
-        });
+    private final EntityManagerFactory entityManagerFactory;
+
+    private interface EntityManagerWork<T> {
+        T execute(EntityManager entityManager) throws SQLException;
+    }
+
+    public OpcaoVinculoRepository() {
+        this(SpringBridge.getBean(EntityManagerFactory.class));
+    }
+
+    public OpcaoVinculoRepository(EntityManagerFactory entityManagerFactory) {
+        this.entityManagerFactory = entityManagerFactory;
     }
 
     public void salvarVinculosAluno(EntityManager entityManager, Long alunoId, long[] opcaoIds) throws SQLException {
@@ -92,18 +94,6 @@ public class OpcaoDAO extends AbstractJpaDao {
         });
     }
 
-    public String resumirAluno(EntityManager entityManager, Long alunoId, String categoria) throws SQLException {
-        return resumir(entityManager, "aluno_opcao", "aluno_id", alunoId, categoria);
-    }
-
-    public String resumirCurso(EntityManager entityManager, Long cursoId, String categoria) throws SQLException {
-        return resumir(entityManager, "curso_opcao", "curso_id", cursoId, categoria);
-    }
-
-    public String resumirCursoAluno(EntityManager entityManager, Long cursoAlunoId, String categoria) throws SQLException {
-        return resumir(entityManager, "curso_aluno_opcao", "curso_aluno_id", cursoAlunoId, categoria);
-    }
-
     public List<Long> listarIdsAluno(final Long alunoId, final String categoria) throws SQLException {
         return executeInEntityManager(new EntityManagerWork<List<Long>>() {
             public List<Long> execute(EntityManager entityManager) throws SQLException {
@@ -120,26 +110,6 @@ public class OpcaoDAO extends AbstractJpaDao {
         });
     }
 
-    public List<Long> listarIdsCursoAluno(final Long cursoAlunoId, final String categoria) throws SQLException {
-        return executeInEntityManager(new EntityManagerWork<List<Long>>() {
-            public List<Long> execute(EntityManager entityManager) throws SQLException {
-                return listarIds(entityManager, "curso_aluno_opcao", "curso_aluno_id", cursoAlunoId, categoria);
-            }
-        });
-    }
-
-    public List<Long> listarIdsAluno(EntityManager entityManager, Long alunoId, String categoria) throws SQLException {
-        return listarIds(entityManager, "aluno_opcao", "aluno_id", alunoId, categoria);
-    }
-
-    public List<Long> listarIdsCurso(EntityManager entityManager, Long cursoId, String categoria) throws SQLException {
-        return listarIds(entityManager, "curso_opcao", "curso_id", cursoId, categoria);
-    }
-
-    public List<Long> listarIdsCursoAluno(EntityManager entityManager, Long cursoAlunoId, String categoria) throws SQLException {
-        return listarIds(entityManager, "curso_aluno_opcao", "curso_aluno_id", cursoAlunoId, categoria);
-    }
-
     public List<String> listarCodigosAluno(final Long alunoId, final String categoria) throws SQLException {
         return executeInEntityManager(new EntityManagerWork<List<String>>() {
             public List<String> execute(EntityManager entityManager) throws SQLException {
@@ -154,27 +124,6 @@ public class OpcaoDAO extends AbstractJpaDao {
                 return listarCodigos(entityManager, "curso_opcao", "curso_id", cursoId, categoria);
             }
         });
-    }
-
-    public List<String> listarCodigosCursoAluno(final Long cursoAlunoId, final String categoria) throws SQLException {
-        return executeInEntityManager(new EntityManagerWork<List<String>>() {
-            public List<String> execute(EntityManager entityManager) throws SQLException {
-                return listarCodigos(entityManager, "curso_aluno_opcao", "curso_aluno_id", cursoAlunoId, categoria);
-            }
-        });
-    }
-
-    public List<String> listarCodigosAluno(EntityManager entityManager, Long alunoId, String categoria) throws SQLException {
-        return listarCodigos(entityManager, "aluno_opcao", "aluno_id", alunoId, categoria);
-    }
-
-    public List<String> listarCodigosCurso(EntityManager entityManager, Long cursoId, String categoria) throws SQLException {
-        return listarCodigos(entityManager, "curso_opcao", "curso_id", cursoId, categoria);
-    }
-
-    public List<String> listarCodigosCursoAluno(EntityManager entityManager, Long cursoAlunoId, String categoria)
-            throws SQLException {
-        return listarCodigos(entityManager, "curso_aluno_opcao", "curso_aluno_id", cursoAlunoId, categoria);
     }
 
     private void salvarVinculos(EntityManager entityManager, String tabela, String colunaFk, Long fkValue, long[] opcaoIds) {
@@ -282,5 +231,36 @@ public class OpcaoDAO extends AbstractJpaDao {
             }
         }
         return codigos;
+    }
+
+    private <T> T executeInEntityManager(EntityManagerWork<T> work) throws SQLException {
+        if (entityManagerFactory == null) {
+            throw new SQLException("EntityManagerFactory indisponivel para OpcaoVinculoRepository.");
+        }
+        EntityManager entityManager = null;
+        try {
+            entityManager = entityManagerFactory.createEntityManager();
+            return work.execute(entityManager);
+        } catch (SQLException e) {
+            throw e;
+        } catch (RuntimeException e) {
+            throw toSqlException("Falha ao executar operacao de opcao/vinculo.", e);
+        } finally {
+            if (entityManager != null) {
+                try {
+                    entityManager.close();
+                } catch (RuntimeException ignored) {
+                    // noop
+                }
+            }
+        }
+    }
+
+    private SQLException toSqlException(String message, RuntimeException e) {
+        Throwable cause = e.getCause();
+        if (cause instanceof SQLException) {
+            return (SQLException) cause;
+        }
+        return new SQLException(message, e);
     }
 }

@@ -1,17 +1,18 @@
 package br.gov.inep.censo.service;
 
-import br.gov.inep.censo.dao.DocenteDAO;
-import br.gov.inep.censo.dao.LayoutCampoDAO;
-import br.gov.inep.censo.dao.MunicipioDAO;
 import br.gov.inep.censo.domain.ModulosLayout;
 import br.gov.inep.censo.model.Docente;
 import br.gov.inep.censo.repository.DocenteRepository;
+import br.gov.inep.censo.repository.LayoutCampoValueRepository;
+import br.gov.inep.censo.repository.MunicipioRepository;
+import br.gov.inep.censo.spring.SpringBridge;
 import br.gov.inep.censo.util.ValidationUtils;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
-import org.springframework.web.context.ContextLoader;
-import org.springframework.web.context.WebApplicationContext;
+import org.springframework.transaction.PlatformTransactionManager;
 
+import javax.persistence.EntityManager;
+import javax.persistence.EntityManagerFactory;
 import java.sql.Date;
 import java.sql.SQLException;
 import java.text.ParseException;
@@ -24,32 +25,51 @@ import java.util.Map;
  */
 public class DocenteService {
 
-    private final DocenteDAO docenteDAO;
-    private final LayoutCampoDAO layoutCampoDAO;
-    private final MunicipioDAO municipioDAO;
+    private final LayoutCampoValueRepository layoutCampoValueRepository;
     private final DocenteRepository docenteRepository;
+    private final MunicipioRepository municipioRepository;
+    private final PlatformTransactionManager transactionManager;
+    private final EntityManagerFactory entityManagerFactory;
 
     public DocenteService() {
-        this(new DocenteDAO(), new LayoutCampoDAO(), new MunicipioDAO(), resolveRepository());
+        this(new LayoutCampoValueRepository(),
+                SpringBridge.getBean(DocenteRepository.class),
+                SpringBridge.getBean(MunicipioRepository.class),
+                SpringBridge.getBean(PlatformTransactionManager.class),
+                SpringBridge.getBean(EntityManagerFactory.class));
     }
 
-    public DocenteService(DocenteDAO docenteDAO, LayoutCampoDAO layoutCampoDAO, MunicipioDAO municipioDAO) {
-        this(docenteDAO, layoutCampoDAO, municipioDAO, null);
-    }
-
-    public DocenteService(DocenteDAO docenteDAO,
-                          LayoutCampoDAO layoutCampoDAO,
-                          MunicipioDAO municipioDAO,
-                          DocenteRepository docenteRepository) {
-        this.docenteDAO = docenteDAO;
-        this.layoutCampoDAO = layoutCampoDAO;
-        this.municipioDAO = municipioDAO;
+    public DocenteService(LayoutCampoValueRepository layoutCampoValueRepository,
+                          DocenteRepository docenteRepository,
+                          MunicipioRepository municipioRepository,
+                          PlatformTransactionManager transactionManager,
+                          EntityManagerFactory entityManagerFactory) {
+        this.layoutCampoValueRepository = layoutCampoValueRepository;
         this.docenteRepository = docenteRepository;
+        this.municipioRepository = municipioRepository;
+        this.transactionManager = transactionManager;
+        this.entityManagerFactory = entityManagerFactory;
     }
 
     public Long cadastrar(Docente docente, Map<Long, String> camposComplementares) throws SQLException {
         validar(docente);
-        return docenteDAO.salvar(docente, camposComplementares);
+        if (canUseRepositoryWritePath()) {
+            final Docente docenteFinal = docente;
+            final Map<Long, String> camposFinal = camposComplementares;
+            return SpringBridge.inTransaction(transactionManager, entityManagerFactory,
+                    new SpringBridge.SqlWork<Long>() {
+                        public Long execute(EntityManager entityManager) throws SQLException {
+                            Docente salvo = docenteRepository.save(docenteFinal);
+                            Long docenteId = salvo != null ? salvo.getId() : docenteFinal.getId();
+                            if (docenteId == null) {
+                                throw new SQLException("Falha ao gerar ID para docente.");
+                            }
+                            layoutCampoValueRepository.salvarValoresDocente(entityManager, docenteId, camposFinal);
+                            return docenteId;
+                        }
+                    }, "Falha ao cadastrar docente via repository.");
+        }
+        throw new SQLException("Infraestrutura Spring Data/Transaction indisponivel para cadastrar docente.");
     }
 
     public void atualizar(Docente docente, Map<Long, String> camposComplementares) throws SQLException {
@@ -57,7 +77,20 @@ public class DocenteService {
         if (docente.getId() == null) {
             throw new IllegalArgumentException("ID do docente e obrigatorio para alteracao.");
         }
-        docenteDAO.atualizar(docente, camposComplementares);
+        if (canUseRepositoryWritePath()) {
+            final Docente docenteFinal = docente;
+            final Map<Long, String> camposFinal = camposComplementares;
+            SpringBridge.inTransaction(transactionManager, entityManagerFactory,
+                    new SpringBridge.SqlWork<Void>() {
+                        public Void execute(EntityManager entityManager) throws SQLException {
+                            docenteRepository.save(docenteFinal);
+                            layoutCampoValueRepository.substituirValoresDocente(entityManager, docenteFinal.getId(), camposFinal);
+                            return null;
+                        }
+                    }, "Falha ao atualizar docente via repository.");
+            return;
+        }
+        throw new SQLException("Infraestrutura Spring Data/Transaction indisponivel para atualizar docente.");
     }
 
     public Docente buscarPorId(Long id) throws SQLException {
@@ -71,7 +104,7 @@ public class DocenteService {
                 throw toSqlException("Falha ao buscar docente via repository.", e);
             }
         }
-        return docenteDAO.buscarPorId(id);
+        throw new SQLException("DocenteRepository indisponivel para buscar por ID.");
     }
 
     public List<Docente> listar() throws SQLException {
@@ -82,7 +115,7 @@ public class DocenteService {
                 throw toSqlException("Falha ao listar docentes via repository.", e);
             }
         }
-        return docenteDAO.listar();
+        throw new SQLException("DocenteRepository indisponivel para listagem.");
     }
 
     public List<Docente> listarPaginado(int pagina, int tamanhoPagina) throws SQLException {
@@ -96,7 +129,7 @@ public class DocenteService {
                 throw toSqlException("Falha ao listar docentes paginados via repository.", e);
             }
         }
-        return docenteDAO.listarPaginado(pagina, tamanhoPagina);
+        throw new SQLException("DocenteRepository indisponivel para listagem paginada.");
     }
 
     public int contar() throws SQLException {
@@ -108,15 +141,32 @@ public class DocenteService {
                 throw toSqlException("Falha ao contar docentes via repository.", e);
             }
         }
-        return docenteDAO.contar();
+        throw new SQLException("DocenteRepository indisponivel para contagem.");
     }
 
     public void excluir(Long id) throws SQLException {
-        docenteDAO.excluir(id);
+        if (id == null) {
+            return;
+        }
+        if (canUseRepositoryWritePath()) {
+            final Long idFinal = id;
+            SpringBridge.inTransaction(transactionManager, entityManagerFactory,
+                    new SpringBridge.SqlWork<Void>() {
+                        public Void execute(EntityManager entityManager) throws SQLException {
+                            layoutCampoValueRepository.removerValoresDocente(entityManager, idFinal);
+                            if (docenteRepository.exists(idFinal)) {
+                                docenteRepository.delete(idFinal);
+                            }
+                            return null;
+                        }
+                    }, "Falha ao excluir docente via repository.");
+            return;
+        }
+        throw new SQLException("Infraestrutura Spring Data/Transaction indisponivel para excluir docente.");
     }
 
     public Map<Long, String> carregarCamposComplementaresPorCampoId(Long docenteId) throws SQLException {
-        return docenteDAO.carregarCamposComplementaresPorCampoId(docenteId);
+        return layoutCampoValueRepository.carregarValoresDocentePorCampoId(docenteId);
     }
 
     public String exportarTodosTxtPipe() throws SQLException {
@@ -147,23 +197,15 @@ public class DocenteService {
         return new SQLException(mensagem, e);
     }
 
-    private static DocenteRepository resolveRepository() {
-        try {
-            WebApplicationContext context = ContextLoader.getCurrentWebApplicationContext();
-            if (context == null) {
-                return null;
-            }
-            return context.getBean(DocenteRepository.class);
-        } catch (Exception e) {
-            return null;
-        }
+    private boolean canUseRepositoryWritePath() {
+        return docenteRepository != null && transactionManager != null && entityManagerFactory != null;
     }
 
     public int importarTxtPipe(String conteudo) throws SQLException {
         if (conteudo == null || conteudo.trim().length() == 0) {
             return 0;
         }
-        Map<Integer, Long> campoIdPorNumero = layoutCampoDAO.mapaCampoIdPorNumero(ModulosLayout.DOCENTE_31);
+        Map<Integer, Long> campoIdPorNumero = layoutCampoValueRepository.mapaCampoIdPorNumero(ModulosLayout.DOCENTE_31);
         String[] linhas = conteudo.split("\\r?\\n");
         int importados = 0;
         for (int i = 0; i < linhas.length; i++) {
@@ -203,7 +245,7 @@ public class DocenteService {
     }
 
     private String exportarLinhaTxtPipe(Docente docente) throws SQLException {
-        Map<Integer, String> valores = docenteDAO.carregarCamposRegistro31PorNumero(docente.getId());
+        Map<Integer, String> valores = layoutCampoValueRepository.carregarValoresDocentePorNumero(docente.getId(), ModulosLayout.DOCENTE_31);
         int max = 42;
         String[] campos = new String[max];
         for (int i = 0; i < max; i++) {
@@ -283,10 +325,24 @@ public class DocenteService {
             if (docente.getUfNascimento() == null) {
                 throw new IllegalArgumentException("UF de nascimento e obrigatoria quando municipio e informado.");
             }
-            if (!municipioDAO.existeCodigoNaUf(docente.getMunicipioNascimento(), docente.getUfNascimento())) {
+            if (!existeMunicipioNaUf(docente.getMunicipioNascimento(), docente.getUfNascimento())) {
                 throw new IllegalArgumentException("Municipio de nascimento nao pertence a UF informada.");
             }
         }
+    }
+
+    private boolean existeMunicipioNaUf(String codigoMunicipio, Integer codigoUf) throws SQLException {
+        if (codigoMunicipio == null || codigoMunicipio.trim().length() == 0 || codigoUf == null) {
+            return false;
+        }
+        if (municipioRepository != null) {
+            try {
+                return municipioRepository.existsByCodigoAndCodigoUf(codigoMunicipio.trim(), codigoUf);
+            } catch (RuntimeException e) {
+                throw toSqlException("Falha ao validar municipio via repository.", e);
+            }
+        }
+        throw new SQLException("MunicipioRepository indisponivel para validacao.");
     }
 
     private String safeField(String[] campos, int numeroCampo) {
@@ -340,3 +396,5 @@ public class DocenteService {
         return new SimpleDateFormat("yyyyMMdd").format(new java.util.Date(date.getTime()));
     }
 }
+
+
