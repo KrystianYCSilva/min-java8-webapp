@@ -1,5 +1,5 @@
 ---
-description: Visao geral do projeto Censo Superior 2025 com escopo funcional atual, fluxos criticos e restricoes operacionais.
+description: Visao geral do projeto Censo Superior 2025 com escopo funcional atual, fluxo de migracao e restricoes operacionais.
 tier: T2
 triggers:
   - overview
@@ -7,15 +7,24 @@ triggers:
   - objetivo
   - fluxo
   - modulo
+  - migracao
+  - roadmap
+  - java8
+  - springboot
+  - mvvm
   - zk
   - jpa
-last_updated: 2026-02-10
+last_updated: 2026-02-11
 ---
 # Visao Geral do Projeto
 
 ## Objetivo
 
-Aplicacao web para cadastro, consulta, importacao e exportacao de dados do Censo Superior 2025, mantendo compatibilidade com stack Java 6.
+Aplicacao web para cadastro, consulta, importacao e exportacao de dados do Censo Superior 2025.
+
+Situacao atual: baseline legado em Java 6 + ZK 3.6.2 (MVC) + Spring tradicional.
+
+Objetivo de evolucao: migrar gradualmente para Java 8 + ZK 8.6.0.1 + Spring Boot + MVVM.
 
 ## Escopo funcional atual
 
@@ -27,12 +36,19 @@ Aplicacao web para cadastro, consulta, importacao e exportacao de dados do Censo
 6. Modulo `IES` (Registro 11): CRUD, importacao/exportacao TXT pipe.
 7. Exportacao de registros individuais e em lote.
 
-## Restricoes
+## Programa de migracao 2026
 
-1. Codigo de producao deve permanecer compativel com Java 6.
-2. Camadas devem manter isolamento (`web/zk`, `service`, `dao`, `model`, `util`).
-3. Persistencia com Hibernate 4.2 via JPA (`javax.persistence`) nesta versao.
-4. Banco principal de desenvolvimento/teste: H2 embarcado.
+1. Fase 1 (`main`): Java 8 com comportamento preservado (ainda MVC).
+2. Fase 2 (`feature/zk8-bootstrap-ui`): ZK 8.6.0.1 + Bootstrap + melhoria de frontend (ainda MVC).
+3. Fase 3 (`feature/springboot-modernization`): Spring Boot + Spring Data + Spring Security + Spring MVC, com remocao gradual dos DAOs legados.
+4. Fase 4 (`feature/zk-mvvm-final`): migracao final de MVC para MVVM.
+
+## Restricoes arquiteturais
+
+1. Camadas devem manter isolamento durante toda a migracao.
+2. Mudanca de framework nao deve alterar regra de negocio sem necessidade.
+3. Banco principal de desenvolvimento/teste permanece H2 ate decisao posterior.
+4. Mudancas de layout/importacao devem continuar compativeis com os registros oficiais.
 
 ## Fluxos criticos
 
@@ -51,3 +67,4 @@ Aplicacao web para cadastro, consulta, importacao e exportacao de dados do Censo
 4. Esquema e seeds: `src/main/resources/db`.
 5. Testes: `src/test/java`.
 6. Arquitetura: `docs/ARCHITECTURE.md`.
+7. Roadmap de migracao: `docs/MIGRATION-ROADMAP.md`.

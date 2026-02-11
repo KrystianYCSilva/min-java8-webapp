@@ -7,7 +7,9 @@ triggers:
   - handoff
   - memoria
   - multi-agent
-last_updated: 2026-02-10
+  - migracao
+  - roadmap
+last_updated: 2026-02-11
 ---
 # Workflow de Carregamento de Contexto
 
@@ -32,6 +34,7 @@ Carregar apenas contexto necessario para cada tarefa, reduzindo latencia, custo 
 5. Pedido envolvendo registros 11/31 ou enums novos: carregar `knowledge/domain-concepts.md` + `docs/ARCHITECTURE.md`.
 6. Pedido envolvendo municipios/UF: carregar `knowledge/domain-concepts.md` + `src/main/resources/db/seed_municipio.sql`.
 7. Pedido envolvendo Hibernate/persistencia: carregar `_meta/tech-stack.md` + `patterns/architecture.md` + `_meta/key-decisions.md`.
+8. Pedido de migracao (java8, zk8, springboot, mvvm): carregar `_meta/migration-roadmap.md` + `_meta/tech-stack.md` + `_meta/key-decisions.md`.
 
 ## Formato de handoff entre agentes
 

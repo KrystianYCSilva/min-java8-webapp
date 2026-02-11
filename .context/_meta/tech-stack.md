@@ -1,5 +1,5 @@
 ---
-description: Inventario tecnico com linguagem, framework, dependencias, plugins Maven, comandos de build/teste e restricoes de runtime.
+description: Inventario tecnico com stack atual, stack alvo de migracao, dependencias e comandos de build/teste.
 tier: T2
 triggers:
   - stack
@@ -7,13 +7,17 @@ triggers:
   - maven
   - dependencia
   - versao
+  - migracao
+  - java8
+  - springboot
+  - mvvm
   - zk
   - jpa
-last_updated: 2026-02-10
+last_updated: 2026-02-11
 ---
 # Stack Tecnica
 
-## Runtime e linguagem
+## Runtime e linguagem (estado atual - baseline)
 
 | Item | Valor |
 | --- | --- |
@@ -23,6 +27,15 @@ last_updated: 2026-02-10
 | Banco | H2 (`com.h2database:h2:1.3.176`) |
 | Persistencia | Hibernate 4.2 + JPA (`EntityManager`) |
 | Empacotamento | WAR (`censo-superior-2025.war`) |
+
+## Stack alvo por fase
+
+| Fase | Stack alvo |
+| --- | --- |
+| Fase 1 (`main`) | Java 8 mantendo ZK 3.6.2 + Spring atual + MVC |
+| Fase 2 (`feature/zk8-bootstrap-ui`) | Java 8 + ZK 8.6.0.1 + Bootstrap + MVC |
+| Fase 3 (`feature/springboot-modernization`) | Java 8 + Spring Boot + Spring Data + Spring Security + Spring MVC |
+| Fase 4 (`feature/zk-mvvm-final`) | Java 8 + ZK 8.6.0.1 + Spring Boot + MVVM |
 
 ## Dependencias principais (pom.xml)
 
@@ -66,10 +79,16 @@ last_updated: 2026-02-10
 mvn clean package
 ```
 
-### Testes recomendados no workspace atual
+### Testes recomendados no baseline atual
 
 ```bash
 mvn '-Dmaven.repo.local=.m2/repository' '-Dmaven.compiler.source=1.7' '-Dmaven.compiler.target=1.7' test
+```
+
+### Testes esperados apos Fase 1 (Java 8)
+
+```bash
+mvn clean test
 ```
 
 ## Gate de qualidade

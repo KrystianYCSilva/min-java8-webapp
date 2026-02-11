@@ -20,6 +20,19 @@ Principais pontos:
 - telas de cadastro/visualizacao abertas em sub-window modal para melhorar UX;
 - camada `service/dao/model` JPA preservada.
 
+## Roadmap de migracao 2026
+
+A evolucao do projeto sera conduzida em fases para demonstrar ganho tecnico incremental e reduzir risco:
+
+1. `main`: migracao para Java 8 mantendo comportamento funcional atual.
+2. `feature/zk8-bootstrap-ui`: upgrade para ZK 8.6.0.1 + Bootstrap + melhoria de frontend (ainda MVC).
+3. `feature/springboot-modernization`: migracao para Spring Boot com Spring Data, Spring Security e Spring MVC.
+4. `feature/zk-mvvm-final`: migracao final de MVC para MVVM.
+
+Artefatos de acompanhamento:
+1. `docs/MIGRATION-ROADMAP.md`
+2. `docs/MIGRATION-CHANGELOG.md`
+
 ## Arquitetura em camadas
 
 - `web/zk`: composers MVC de navegacao e interacao de tela.
@@ -100,4 +113,5 @@ mvn '-Dmaven.compiler.source=1.7' '-Dmaven.compiler.target=1.7' test
 
 - `docs/ARCHITECTURE.md`
 - `docs/TEST-PLAN.md`
-- `docs/HIBERNATE-MIGRATION.md`
+- `docs/MIGRATION-ROADMAP.md`
+- `docs/MIGRATION-CHANGELOG.md`

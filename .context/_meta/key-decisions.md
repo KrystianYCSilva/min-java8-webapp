@@ -9,7 +9,10 @@ triggers:
   - arquitetura
   - zk
   - jpa
-last_updated: 2026-02-10
+  - migracao
+  - springboot
+  - mvvm
+last_updated: 2026-02-11
 ---
 # Decisoes Chave
 
@@ -30,6 +33,10 @@ last_updated: 2026-02-10
 | ADR-013 | Hash de senha PBKDF2 com migracao transparente de SHA-256 legado | Aceita | Elevar seguranca sem quebrar base existente de usuarios | Login com hash legado dispara rehash para PBKDF2 |
 | ADR-014 | Frontend ZK 3.6.2 MVC substitui JSP/servlets de tela | Aceita | Unificar stack de interface e reduzir codigo legado duplicado | Navegacao e eventos passam para composers ZK |
 | ADR-015 | Shell unico em `menu.zul` com `view/sub` e sub-window modal | Aceita | UX mais consistente e roteamento centralizado | Menor acoplamento entre telas e maior reuso do layout |
+| ADR-016 | Modernizacao em fases por branch (sem Big Bang) | Aceita | Reduzir risco de regressao e facilitar demonstracao incremental para o time | Cada fase possui gate tecnico, rollback e evidencia propria |
+| ADR-017 | Ordem de migracao: Java 8 -> ZK 8 + UI -> Spring Boot -> MVVM | Aceita | Separar mudancas de plataforma das mudancas de padrao de UI | Facilita diagnostico de regressao e aprovacao por etapa |
+| ADR-018 | Migracao para MVVM como fase final de convencimento tecnico | Aceita | Mostrar ganhos de produtividade/manutencao apos stack estabilizada | Evita atribuir problemas de infraestrutura ao novo padrao MVVM |
+| ADR-019 | Eliminacao gradual de DAOs legados em favor de Spring Data | Aceita | Padronizar persistencia no ecossistema Spring com menor codigo boilerplate | Exige parallel change com testes de integracao antes de remover DAO |
 
 ## Quando atualizar este arquivo
 

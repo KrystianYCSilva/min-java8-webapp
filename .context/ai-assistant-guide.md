@@ -7,7 +7,9 @@ triggers:
   - prioridades
   - assistente
   - agente
-last_updated: 2026-02-10
+  - migracao
+  - roadmap
+last_updated: 2026-02-11
 ---
 # Guia do Assistente AI
 
@@ -24,7 +26,7 @@ last_updated: 2026-02-10
 1. Preservar dependencia por camadas: `web -> service -> dao -> db`.
 2. Nao colocar SQL fora de `src/main/java/.../dao`.
 3. Nao colocar regra de negocio em controllers de tela (`Composer`/camada `web`).
-4. Manter compatibilidade de codigo de producao com Java 6 (`source/target 1.6`).
+4. Respeitar regra de compatibilidade por fase: baseline legado Java 6; apos Fase 1 usar Java 8.
 5. Nao alterar artefatos gerados como entrega funcional (`target/`, `.m2/`).
 6. Ao alterar layout/importacao/persistencia, sincronizar banco, service e testes.
 7. Carregar contexto por JIT: comece no minimo necessario e expanda por gatilho.

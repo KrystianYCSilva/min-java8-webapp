@@ -9,10 +9,15 @@ triggers:
   - arquitetura
   - testes
   - hibernate
+  - migracao
+  - roadmap
+  - java8
+  - springboot
+  - mvvm
   - docente
   - ies
   - municipio
-last_updated: 2026-02-10
+last_updated: 2026-02-11
 ---
 # Contexto do Projeto
 
@@ -32,6 +37,7 @@ Carregar sempre:
 | --- | --- |
 | arquitetura, camadas, fluxo servlet | `./patterns/architecture.md`, `./_meta/project-overview.md` |
 | java, maven, dependencias, versoes, hibernate | `./_meta/tech-stack.md` |
+| migracao, roadmap, java8, zk8, springboot, mvvm | `./_meta/migration-roadmap.md`, `./_meta/key-decisions.md` |
 | testes, cobertura, jacoco, e2e | `./standards/testing-strategy.md` |
 | aluno, curso, curso-aluno, registro 21/41/42, layout | `./knowledge/domain-concepts.md` |
 | docente, ies, registro 31/11, municipio, pais, uf | `./knowledge/domain-concepts.md`, `./_meta/project-overview.md` |
@@ -48,7 +54,8 @@ Carregar sempre:
 ├── _meta/
 │   ├── project-overview.md
 │   ├── tech-stack.md
-│   └── key-decisions.md
+│   ├── key-decisions.md
+│   └── migration-roadmap.md
 ├── standards/
 │   ├── architectural-rules.md
 │   ├── code-quality.md

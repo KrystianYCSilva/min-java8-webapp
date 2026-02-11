@@ -117,3 +117,10 @@ src/test/java/
    ├─ web/filter/
    └─ e2e/
 ```
+
+## 7. Gates de migracao por fase
+
+1. Fase 1 (Java 8): suite de testes atual + smoke manual de login/menu/CRUD sem regressao.
+2. Fase 2 (ZK 8 + Bootstrap): smoke de navegacao e renderizacao em todas as telas `.zul` criticas.
+3. Fase 3 (Spring Boot): testes de service/repository + validacao da cadeia de seguranca.
+4. Fase 4 (MVVM): regressao funcional dos modulos migrados (com foco em comandos/bindings).

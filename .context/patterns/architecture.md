@@ -5,9 +5,12 @@ triggers:
   - blueprint
   - arquitetura
   - fluxo
+  - migracao
+  - springboot
+  - mvvm
   - zk
   - jpa
-last_updated: 2026-02-10
+last_updated: 2026-02-11
 ---
 # Blueprint de Arquitetura
 
@@ -66,3 +69,10 @@ HTTP Response (renderizacao ZK AU/HTML)
 4. Validacao de UF/municipio em `DocenteService` e `IesService` depende da tabela `municipio`.
 5. Pool interno do Hibernate e aceitavel para desenvolvimento, mas nao para producao.
 6. Navegacao de modal depende dos parametros `view/sub/id` no shell.
+
+## Evolucao planejada
+
+1. Curto prazo: migracao Java 8 mantendo arquitetura funcional atual.
+2. Medio prazo: upgrade ZK e frontend sem trocar o padrao MVC.
+3. Proximo passo: Spring Boot + Spring Data com coexistencia temporaria DAO/Repository.
+4. Etapa final: migracao de tela para MVVM.

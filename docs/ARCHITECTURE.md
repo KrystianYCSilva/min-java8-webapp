@@ -140,7 +140,8 @@ Qualidade:
 
 1. `README.md`
 2. `docs/TEST-PLAN.md`
-3. `docs/HIBERNATE-MIGRATION.md`
-4. `src/main/java/br/gov/inep/censo/web/zk`
-5. `src/main/webapp/WEB-INF/zk.xml`
-6. `src/main/webapp/app/menu.zul`
+3. `docs/MIGRATION-ROADMAP.md`
+4. `docs/MIGRATION-CHANGELOG.md`
+5. `src/main/java/br/gov/inep/censo/web/zk`
+6. `src/main/webapp/WEB-INF/zk.xml`
+7. `src/main/webapp/app/menu.zul`
