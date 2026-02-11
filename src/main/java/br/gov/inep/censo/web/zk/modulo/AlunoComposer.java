@@ -18,7 +18,6 @@ import org.zkoss.zul.Checkbox;
 import org.zkoss.zul.Comboitem;
 import org.zkoss.zul.Combobox;
 import org.zkoss.zul.Datebox;
-import org.zkoss.zul.Filedownload;
 import org.zkoss.zul.Hbox;
 import org.zkoss.zul.Label;
 import org.zkoss.zul.Listcell;
@@ -124,12 +123,7 @@ public class AlunoComposer extends AbstractBaseComposer {
     }
 
     public void onClick$btnExportarListAluno() {
-        try {
-            String txt = alunoService.exportarTodosTxtPipe();
-            Filedownload.save(txt, "text/plain", "alunos_registro41.txt");
-        } catch (Exception e) {
-            showListError("Falha ao exportar alunos.");
-        }
+        redirect("/api/relatorios/alunos.txt");
     }
 
     public void onClick$btnImportarListAluno() {
@@ -364,12 +358,11 @@ public class AlunoComposer extends AbstractBaseComposer {
     }
 
     private void exportarAluno(Long id) {
-        try {
-            String txt = alunoService.exportarPorIdTxtPipe(id);
-            Filedownload.save(txt, "text/plain", "aluno_" + id + "_registro41.txt");
-        } catch (Exception e) {
+        if (id == null) {
             showListError("Falha ao exportar aluno.");
+            return;
         }
+        redirect("/api/relatorios/alunos/" + id + ".txt");
     }
 
     private void popularCombos(Aluno aluno) {

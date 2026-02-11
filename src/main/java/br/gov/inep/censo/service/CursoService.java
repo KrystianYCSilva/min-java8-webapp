@@ -4,7 +4,12 @@ import br.gov.inep.censo.dao.CursoDAO;
 import br.gov.inep.censo.dao.LayoutCampoDAO;
 import br.gov.inep.censo.domain.ModulosLayout;
 import br.gov.inep.censo.model.Curso;
+import br.gov.inep.censo.repository.CursoRepository;
 import br.gov.inep.censo.util.ValidationUtils;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.web.context.ContextLoader;
+import org.springframework.web.context.WebApplicationContext;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -20,14 +25,20 @@ public class CursoService {
 
     private final CursoDAO cursoDAO;
     private final LayoutCampoDAO layoutCampoDAO;
+    private final CursoRepository cursoRepository;
 
     public CursoService() {
-        this(new CursoDAO(), new LayoutCampoDAO());
+        this(new CursoDAO(), new LayoutCampoDAO(), resolveRepository());
     }
 
     public CursoService(CursoDAO cursoDAO, LayoutCampoDAO layoutCampoDAO) {
+        this(cursoDAO, layoutCampoDAO, null);
+    }
+
+    public CursoService(CursoDAO cursoDAO, LayoutCampoDAO layoutCampoDAO, CursoRepository cursoRepository) {
         this.cursoDAO = cursoDAO;
         this.layoutCampoDAO = layoutCampoDAO;
+        this.cursoRepository = cursoRepository;
     }
 
     public Long cadastrar(Curso curso, long[] opcaoIds, Map<Long, String> camposComplementares) throws SQLException {
@@ -44,18 +55,53 @@ public class CursoService {
     }
 
     public Curso buscarPorId(Long id) throws SQLException {
+        if (id == null) {
+            return null;
+        }
+        if (cursoRepository != null) {
+            try {
+                return cursoRepository.findOne(id);
+            } catch (RuntimeException e) {
+                throw toSqlException("Falha ao buscar curso via repository.", e);
+            }
+        }
         return cursoDAO.buscarPorId(id);
     }
 
     public List<Curso> listar() throws SQLException {
+        if (cursoRepository != null) {
+            try {
+                return cursoRepository.findAll(new Sort(Sort.Direction.ASC, "nome"));
+            } catch (RuntimeException e) {
+                throw toSqlException("Falha ao listar cursos via repository.", e);
+            }
+        }
         return cursoDAO.listar();
     }
 
     public List<Curso> listarPaginado(int pagina, int tamanhoPagina) throws SQLException {
+        if (cursoRepository != null) {
+            int page = pagina <= 0 ? 0 : pagina - 1;
+            int size = tamanhoPagina <= 0 ? 10 : tamanhoPagina;
+            try {
+                return cursoRepository.findAll(
+                        new PageRequest(page, size, new Sort(Sort.Direction.ASC, "nome"))).getContent();
+            } catch (RuntimeException e) {
+                throw toSqlException("Falha ao listar cursos paginados via repository.", e);
+            }
+        }
         return cursoDAO.listarPaginado(pagina, tamanhoPagina);
     }
 
     public int contar() throws SQLException {
+        if (cursoRepository != null) {
+            try {
+                long total = cursoRepository.count();
+                return total > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) total;
+            } catch (RuntimeException e) {
+                throw toSqlException("Falha ao contar cursos via repository.", e);
+            }
+        }
         return cursoDAO.contar();
     }
 
@@ -72,7 +118,7 @@ public class CursoService {
     }
 
     public String exportarTodosTxtPipe() throws SQLException {
-        List<Curso> cursos = cursoDAO.listar();
+        List<Curso> cursos = listar();
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < cursos.size(); i++) {
             if (i > 0) {
@@ -84,11 +130,31 @@ public class CursoService {
     }
 
     public String exportarPorIdTxtPipe(Long cursoId) throws SQLException {
-        Curso curso = cursoDAO.buscarPorId(cursoId);
+        Curso curso = buscarPorId(cursoId);
         if (curso == null) {
             return "";
         }
         return exportarLinhaTxtPipe(curso);
+    }
+
+    private SQLException toSqlException(String mensagem, RuntimeException e) {
+        Throwable cause = e.getCause();
+        if (cause instanceof SQLException) {
+            return (SQLException) cause;
+        }
+        return new SQLException(mensagem, e);
+    }
+
+    private static CursoRepository resolveRepository() {
+        try {
+            WebApplicationContext context = ContextLoader.getCurrentWebApplicationContext();
+            if (context == null) {
+                return null;
+            }
+            return context.getBean(CursoRepository.class);
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     public int importarTxtPipe(String conteudo) throws SQLException {

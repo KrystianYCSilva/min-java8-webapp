@@ -4,7 +4,12 @@ import br.gov.inep.censo.dao.AlunoDAO;
 import br.gov.inep.censo.dao.LayoutCampoDAO;
 import br.gov.inep.censo.domain.ModulosLayout;
 import br.gov.inep.censo.model.Aluno;
+import br.gov.inep.censo.repository.AlunoRepository;
 import br.gov.inep.censo.util.ValidationUtils;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.web.context.ContextLoader;
+import org.springframework.web.context.WebApplicationContext;
 
 import java.sql.Date;
 import java.sql.SQLException;
@@ -23,14 +28,20 @@ public class AlunoService {
 
     private final AlunoDAO alunoDAO;
     private final LayoutCampoDAO layoutCampoDAO;
+    private final AlunoRepository alunoRepository;
 
     public AlunoService() {
-        this(new AlunoDAO(), new LayoutCampoDAO());
+        this(new AlunoDAO(), new LayoutCampoDAO(), resolveRepository());
     }
 
     public AlunoService(AlunoDAO alunoDAO, LayoutCampoDAO layoutCampoDAO) {
+        this(alunoDAO, layoutCampoDAO, null);
+    }
+
+    public AlunoService(AlunoDAO alunoDAO, LayoutCampoDAO layoutCampoDAO, AlunoRepository alunoRepository) {
         this.alunoDAO = alunoDAO;
         this.layoutCampoDAO = layoutCampoDAO;
+        this.alunoRepository = alunoRepository;
     }
 
     public Long cadastrar(Aluno aluno, long[] opcaoIds, Map<Long, String> camposComplementares) throws SQLException {
@@ -47,18 +58,53 @@ public class AlunoService {
     }
 
     public Aluno buscarPorId(Long id) throws SQLException {
+        if (id == null) {
+            return null;
+        }
+        if (alunoRepository != null) {
+            try {
+                return alunoRepository.findOne(id);
+            } catch (RuntimeException e) {
+                throw toSqlException("Falha ao buscar aluno via repository.", e);
+            }
+        }
         return alunoDAO.buscarPorId(id);
     }
 
     public List<Aluno> listar() throws SQLException {
+        if (alunoRepository != null) {
+            try {
+                return alunoRepository.findAll(new Sort(Sort.Direction.ASC, "nome"));
+            } catch (RuntimeException e) {
+                throw toSqlException("Falha ao listar alunos via repository.", e);
+            }
+        }
         return alunoDAO.listar();
     }
 
     public List<Aluno> listarPaginado(int pagina, int tamanhoPagina) throws SQLException {
+        if (alunoRepository != null) {
+            int page = pagina <= 0 ? 0 : pagina - 1;
+            int size = tamanhoPagina <= 0 ? 10 : tamanhoPagina;
+            try {
+                return alunoRepository.findAll(
+                        new PageRequest(page, size, new Sort(Sort.Direction.ASC, "nome"))).getContent();
+            } catch (RuntimeException e) {
+                throw toSqlException("Falha ao listar alunos paginados via repository.", e);
+            }
+        }
         return alunoDAO.listarPaginado(pagina, tamanhoPagina);
     }
 
     public int contar() throws SQLException {
+        if (alunoRepository != null) {
+            try {
+                long total = alunoRepository.count();
+                return total > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) total;
+            } catch (RuntimeException e) {
+                throw toSqlException("Falha ao contar alunos via repository.", e);
+            }
+        }
         return alunoDAO.contar();
     }
 
@@ -75,7 +121,7 @@ public class AlunoService {
     }
 
     public String exportarTodosTxtPipe() throws SQLException {
-        List<Aluno> alunos = alunoDAO.listar();
+        List<Aluno> alunos = listar();
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < alunos.size(); i++) {
             if (i > 0) {
@@ -87,11 +133,31 @@ public class AlunoService {
     }
 
     public String exportarPorIdTxtPipe(Long alunoId) throws SQLException {
-        Aluno aluno = alunoDAO.buscarPorId(alunoId);
+        Aluno aluno = buscarPorId(alunoId);
         if (aluno == null) {
             return "";
         }
         return exportarLinhaTxtPipe(aluno);
+    }
+
+    private SQLException toSqlException(String mensagem, RuntimeException e) {
+        Throwable cause = e.getCause();
+        if (cause instanceof SQLException) {
+            return (SQLException) cause;
+        }
+        return new SQLException(mensagem, e);
+    }
+
+    private static AlunoRepository resolveRepository() {
+        try {
+            WebApplicationContext context = ContextLoader.getCurrentWebApplicationContext();
+            if (context == null) {
+                return null;
+            }
+            return context.getBean(AlunoRepository.class);
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     public int importarTxtPipe(String conteudo) throws SQLException {

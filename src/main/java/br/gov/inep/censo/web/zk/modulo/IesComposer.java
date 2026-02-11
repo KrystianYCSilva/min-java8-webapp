@@ -14,7 +14,6 @@ import org.zkoss.zk.ui.event.Events;
 import org.zkoss.zul.Button;
 import org.zkoss.zul.Comboitem;
 import org.zkoss.zul.Combobox;
-import org.zkoss.zul.Filedownload;
 import org.zkoss.zul.Hbox;
 import org.zkoss.zul.Label;
 import org.zkoss.zul.Listbox;
@@ -116,12 +115,7 @@ public class IesComposer extends AbstractBaseComposer {
     }
 
     public void onClick$btnExportarListIes() {
-        try {
-            String txt = iesService.exportarTodosTxtPipe();
-            Filedownload.save(txt, "text/plain", "ies_registro11.txt");
-        } catch (Exception e) {
-            showListError("Falha ao exportar IES.");
-        }
+        redirect("/api/relatorios/ies.txt");
     }
 
     public void onClick$btnImportarListIes() {
@@ -347,12 +341,11 @@ public class IesComposer extends AbstractBaseComposer {
     }
 
     private void exportarIes(Long id) {
-        try {
-            String txt = iesService.exportarPorIdTxtPipe(id);
-            Filedownload.save(txt, "text/plain", "ies_" + id + "_registro11.txt");
-        } catch (Exception e) {
+        if (id == null) {
             showListError("Falha ao exportar IES.");
+            return;
         }
+        redirect("/api/relatorios/ies/" + id + ".txt");
     }
 
     private void popularCombos(Ies ies) {

@@ -5,7 +5,12 @@ import br.gov.inep.censo.dao.LayoutCampoDAO;
 import br.gov.inep.censo.dao.MunicipioDAO;
 import br.gov.inep.censo.domain.ModulosLayout;
 import br.gov.inep.censo.model.Docente;
+import br.gov.inep.censo.repository.DocenteRepository;
 import br.gov.inep.censo.util.ValidationUtils;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.web.context.ContextLoader;
+import org.springframework.web.context.WebApplicationContext;
 
 import java.sql.Date;
 import java.sql.SQLException;
@@ -22,15 +27,24 @@ public class DocenteService {
     private final DocenteDAO docenteDAO;
     private final LayoutCampoDAO layoutCampoDAO;
     private final MunicipioDAO municipioDAO;
+    private final DocenteRepository docenteRepository;
 
     public DocenteService() {
-        this(new DocenteDAO(), new LayoutCampoDAO(), new MunicipioDAO());
+        this(new DocenteDAO(), new LayoutCampoDAO(), new MunicipioDAO(), resolveRepository());
     }
 
     public DocenteService(DocenteDAO docenteDAO, LayoutCampoDAO layoutCampoDAO, MunicipioDAO municipioDAO) {
+        this(docenteDAO, layoutCampoDAO, municipioDAO, null);
+    }
+
+    public DocenteService(DocenteDAO docenteDAO,
+                          LayoutCampoDAO layoutCampoDAO,
+                          MunicipioDAO municipioDAO,
+                          DocenteRepository docenteRepository) {
         this.docenteDAO = docenteDAO;
         this.layoutCampoDAO = layoutCampoDAO;
         this.municipioDAO = municipioDAO;
+        this.docenteRepository = docenteRepository;
     }
 
     public Long cadastrar(Docente docente, Map<Long, String> camposComplementares) throws SQLException {
@@ -47,18 +61,53 @@ public class DocenteService {
     }
 
     public Docente buscarPorId(Long id) throws SQLException {
+        if (id == null) {
+            return null;
+        }
+        if (docenteRepository != null) {
+            try {
+                return docenteRepository.findOne(id);
+            } catch (RuntimeException e) {
+                throw toSqlException("Falha ao buscar docente via repository.", e);
+            }
+        }
         return docenteDAO.buscarPorId(id);
     }
 
     public List<Docente> listar() throws SQLException {
+        if (docenteRepository != null) {
+            try {
+                return docenteRepository.findAll(new Sort(Sort.Direction.ASC, "nome"));
+            } catch (RuntimeException e) {
+                throw toSqlException("Falha ao listar docentes via repository.", e);
+            }
+        }
         return docenteDAO.listar();
     }
 
     public List<Docente> listarPaginado(int pagina, int tamanhoPagina) throws SQLException {
+        if (docenteRepository != null) {
+            int page = pagina <= 0 ? 0 : pagina - 1;
+            int size = tamanhoPagina <= 0 ? 10 : tamanhoPagina;
+            try {
+                return docenteRepository.findAll(
+                        new PageRequest(page, size, new Sort(Sort.Direction.ASC, "nome"))).getContent();
+            } catch (RuntimeException e) {
+                throw toSqlException("Falha ao listar docentes paginados via repository.", e);
+            }
+        }
         return docenteDAO.listarPaginado(pagina, tamanhoPagina);
     }
 
     public int contar() throws SQLException {
+        if (docenteRepository != null) {
+            try {
+                long total = docenteRepository.count();
+                return total > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) total;
+            } catch (RuntimeException e) {
+                throw toSqlException("Falha ao contar docentes via repository.", e);
+            }
+        }
         return docenteDAO.contar();
     }
 
@@ -71,7 +120,7 @@ public class DocenteService {
     }
 
     public String exportarTodosTxtPipe() throws SQLException {
-        List<Docente> docentes = docenteDAO.listar();
+        List<Docente> docentes = listar();
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < docentes.size(); i++) {
             if (i > 0) {
@@ -83,11 +132,31 @@ public class DocenteService {
     }
 
     public String exportarPorIdTxtPipe(Long docenteId) throws SQLException {
-        Docente docente = docenteDAO.buscarPorId(docenteId);
+        Docente docente = buscarPorId(docenteId);
         if (docente == null) {
             return "";
         }
         return exportarLinhaTxtPipe(docente);
+    }
+
+    private SQLException toSqlException(String mensagem, RuntimeException e) {
+        Throwable cause = e.getCause();
+        if (cause instanceof SQLException) {
+            return (SQLException) cause;
+        }
+        return new SQLException(mensagem, e);
+    }
+
+    private static DocenteRepository resolveRepository() {
+        try {
+            WebApplicationContext context = ContextLoader.getCurrentWebApplicationContext();
+            if (context == null) {
+                return null;
+            }
+            return context.getBean(DocenteRepository.class);
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     public int importarTxtPipe(String conteudo) throws SQLException {

@@ -5,7 +5,12 @@ import br.gov.inep.censo.dao.LayoutCampoDAO;
 import br.gov.inep.censo.dao.MunicipioDAO;
 import br.gov.inep.censo.domain.ModulosLayout;
 import br.gov.inep.censo.model.Ies;
+import br.gov.inep.censo.repository.IesRepository;
 import br.gov.inep.censo.util.ValidationUtils;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.web.context.ContextLoader;
+import org.springframework.web.context.WebApplicationContext;
 
 import java.sql.SQLException;
 import java.util.List;
@@ -19,15 +24,24 @@ public class IesService {
     private final IesDAO iesDAO;
     private final LayoutCampoDAO layoutCampoDAO;
     private final MunicipioDAO municipioDAO;
+    private final IesRepository iesRepository;
 
     public IesService() {
-        this(new IesDAO(), new LayoutCampoDAO(), new MunicipioDAO());
+        this(new IesDAO(), new LayoutCampoDAO(), new MunicipioDAO(), resolveRepository());
     }
 
     public IesService(IesDAO iesDAO, LayoutCampoDAO layoutCampoDAO, MunicipioDAO municipioDAO) {
+        this(iesDAO, layoutCampoDAO, municipioDAO, null);
+    }
+
+    public IesService(IesDAO iesDAO,
+                      LayoutCampoDAO layoutCampoDAO,
+                      MunicipioDAO municipioDAO,
+                      IesRepository iesRepository) {
         this.iesDAO = iesDAO;
         this.layoutCampoDAO = layoutCampoDAO;
         this.municipioDAO = municipioDAO;
+        this.iesRepository = iesRepository;
     }
 
     public Long cadastrar(Ies ies, Map<Long, String> camposComplementares) throws SQLException {
@@ -44,18 +58,53 @@ public class IesService {
     }
 
     public Ies buscarPorId(Long id) throws SQLException {
+        if (id == null) {
+            return null;
+        }
+        if (iesRepository != null) {
+            try {
+                return iesRepository.findOne(id);
+            } catch (RuntimeException e) {
+                throw toSqlException("Falha ao buscar ies via repository.", e);
+            }
+        }
         return iesDAO.buscarPorId(id);
     }
 
     public List<Ies> listar() throws SQLException {
+        if (iesRepository != null) {
+            try {
+                return iesRepository.findAll(new Sort(Sort.Direction.ASC, "nomeLaboratorio"));
+            } catch (RuntimeException e) {
+                throw toSqlException("Falha ao listar ies via repository.", e);
+            }
+        }
         return iesDAO.listar();
     }
 
     public List<Ies> listarPaginado(int pagina, int tamanhoPagina) throws SQLException {
+        if (iesRepository != null) {
+            int page = pagina <= 0 ? 0 : pagina - 1;
+            int size = tamanhoPagina <= 0 ? 10 : tamanhoPagina;
+            try {
+                return iesRepository.findAll(
+                        new PageRequest(page, size, new Sort(Sort.Direction.ASC, "nomeLaboratorio"))).getContent();
+            } catch (RuntimeException e) {
+                throw toSqlException("Falha ao listar ies paginadas via repository.", e);
+            }
+        }
         return iesDAO.listarPaginado(pagina, tamanhoPagina);
     }
 
     public int contar() throws SQLException {
+        if (iesRepository != null) {
+            try {
+                long total = iesRepository.count();
+                return total > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) total;
+            } catch (RuntimeException e) {
+                throw toSqlException("Falha ao contar ies via repository.", e);
+            }
+        }
         return iesDAO.contar();
     }
 
@@ -68,7 +117,7 @@ public class IesService {
     }
 
     public String exportarTodosTxtPipe() throws SQLException {
-        List<Ies> itens = iesDAO.listar();
+        List<Ies> itens = listar();
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < itens.size(); i++) {
             if (i > 0) {
@@ -80,11 +129,31 @@ public class IesService {
     }
 
     public String exportarPorIdTxtPipe(Long id) throws SQLException {
-        Ies ies = iesDAO.buscarPorId(id);
+        Ies ies = buscarPorId(id);
         if (ies == null) {
             return "";
         }
         return exportarLinhaTxtPipe(ies);
+    }
+
+    private SQLException toSqlException(String mensagem, RuntimeException e) {
+        Throwable cause = e.getCause();
+        if (cause instanceof SQLException) {
+            return (SQLException) cause;
+        }
+        return new SQLException(mensagem, e);
+    }
+
+    private static IesRepository resolveRepository() {
+        try {
+            WebApplicationContext context = ContextLoader.getCurrentWebApplicationContext();
+            if (context == null) {
+                return null;
+            }
+            return context.getBean(IesRepository.class);
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     public int importarTxtPipe(String conteudo) throws SQLException {

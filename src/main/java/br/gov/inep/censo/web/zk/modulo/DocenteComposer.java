@@ -17,7 +17,6 @@ import org.zkoss.zul.Button;
 import org.zkoss.zul.Comboitem;
 import org.zkoss.zul.Combobox;
 import org.zkoss.zul.Datebox;
-import org.zkoss.zul.Filedownload;
 import org.zkoss.zul.Hbox;
 import org.zkoss.zul.Label;
 import org.zkoss.zul.Listbox;
@@ -122,12 +121,7 @@ public class DocenteComposer extends AbstractBaseComposer {
     }
 
     public void onClick$btnExportarListDocente() {
-        try {
-            String txt = docenteService.exportarTodosTxtPipe();
-            Filedownload.save(txt, "text/plain", "docentes_registro31.txt");
-        } catch (Exception e) {
-            showListError("Falha ao exportar docentes.");
-        }
+        redirect("/api/relatorios/docentes.txt");
     }
 
     public void onClick$btnImportarListDocente() {
@@ -373,12 +367,11 @@ public class DocenteComposer extends AbstractBaseComposer {
     }
 
     private void exportarDocente(Long id) {
-        try {
-            String txt = docenteService.exportarPorIdTxtPipe(id);
-            Filedownload.save(txt, "text/plain", "docente_" + id + "_registro31.txt");
-        } catch (Exception e) {
+        if (id == null) {
             showListError("Falha ao exportar docente.");
+            return;
         }
+        redirect("/api/relatorios/docentes/" + id + ".txt");
     }
 
     private void popularCombos(Docente docente) {

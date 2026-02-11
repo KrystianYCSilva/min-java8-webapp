@@ -17,7 +17,6 @@ import org.zkoss.zul.Button;
 import org.zkoss.zul.Checkbox;
 import org.zkoss.zul.Comboitem;
 import org.zkoss.zul.Combobox;
-import org.zkoss.zul.Filedownload;
 import org.zkoss.zul.Hbox;
 import org.zkoss.zul.Label;
 import org.zkoss.zul.Listbox;
@@ -114,12 +113,7 @@ public class CursoComposer extends AbstractBaseComposer {
     }
 
     public void onClick$btnExportarListCurso() {
-        try {
-            String txt = cursoService.exportarTodosTxtPipe();
-            Filedownload.save(txt, "text/plain", "cursos_registro21.txt");
-        } catch (Exception e) {
-            showListError("Falha ao exportar cursos.");
-        }
+        redirect("/api/relatorios/cursos.txt");
     }
 
     public void onClick$btnImportarListCurso() {
@@ -334,12 +328,11 @@ public class CursoComposer extends AbstractBaseComposer {
     }
 
     private void exportarCurso(Long id) {
-        try {
-            String txt = cursoService.exportarPorIdTxtPipe(id);
-            Filedownload.save(txt, "text/plain", "curso_" + id + "_registro21.txt");
-        } catch (Exception e) {
+        if (id == null) {
             showListError("Falha ao exportar curso.");
+            return;
         }
+        redirect("/api/relatorios/cursos/" + id + ".txt");
     }
 
     private void popularCombos(Curso curso) {

@@ -1,6 +1,5 @@
 package br.gov.inep.censo.web.zk.auth;
 
-import br.gov.inep.censo.dao.UsuarioDAO;
 import br.gov.inep.censo.model.Usuario;
 import br.gov.inep.censo.service.AuthService;
 import br.gov.inep.censo.web.zk.AbstractBaseComposer;
@@ -16,7 +15,7 @@ public class LoginComposer extends AbstractBaseComposer {
 
     private static final long serialVersionUID = 1L;
 
-    private final AuthService authService = new AuthService(new UsuarioDAO());
+    private final AuthService authService = new AuthService();
 
     private Textbox txtLogin;
     private Textbox txtSenha;
