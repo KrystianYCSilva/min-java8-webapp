@@ -6,178 +6,121 @@ import br.gov.inep.censo.model.Curso;
 import br.gov.inep.censo.repository.CursoRepository;
 import br.gov.inep.censo.repository.LayoutCampoValueRepository;
 import br.gov.inep.censo.repository.OpcaoVinculoRepository;
-import br.gov.inep.censo.spring.SpringBridge;
 import br.gov.inep.censo.util.ValidationUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
-import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import javax.persistence.EntityManager;
-import javax.persistence.EntityManagerFactory;
 import java.sql.SQLException;
 import java.util.*;
 
 /**
  * Servico de negocio do modulo Curso.
  */
+@Service
 public class CursoService {
 
     private final LayoutCampoValueRepository layoutCampoValueRepository;
     private final CursoRepository cursoRepository;
     private final OpcaoVinculoRepository opcaoVinculoRepository;
-    private final PlatformTransactionManager transactionManager;
-    private final EntityManagerFactory entityManagerFactory;
+    private final CatalogoService catalogoService;
 
-    public CursoService() {
-        this(new LayoutCampoValueRepository(),
-                SpringBridge.getBean(CursoRepository.class),
-                new OpcaoVinculoRepository(),
-                SpringBridge.getBean(PlatformTransactionManager.class),
-                SpringBridge.getBean(EntityManagerFactory.class));
-    }
-
+    @Autowired
     public CursoService(LayoutCampoValueRepository layoutCampoValueRepository,
                         CursoRepository cursoRepository,
                         OpcaoVinculoRepository opcaoVinculoRepository,
-                        PlatformTransactionManager transactionManager,
-                        EntityManagerFactory entityManagerFactory) {
+                        CatalogoService catalogoService) {
         this.layoutCampoValueRepository = layoutCampoValueRepository;
         this.cursoRepository = cursoRepository;
         this.opcaoVinculoRepository = opcaoVinculoRepository;
-        this.transactionManager = transactionManager;
-        this.entityManagerFactory = entityManagerFactory;
+        this.catalogoService = catalogoService;
     }
 
+    @Transactional
     public Long cadastrar(Curso curso, long[] opcaoIds, Map<Long, String> camposComplementares) throws SQLException {
         validar(curso);
-        if (canUseRepositoryWritePath()) {
-            final Curso cursoFinal = curso;
-            final long[] opcaoIdsFinal = opcaoIds;
-            final Map<Long, String> camposFinal = camposComplementares;
-            return SpringBridge.inTransaction(transactionManager, entityManagerFactory,
-                    new SpringBridge.SqlWork<Long>() {
-                        public Long execute(EntityManager entityManager) throws SQLException {
-                            Curso salvo = cursoRepository.save(cursoFinal);
-                            Long cursoId = salvo != null ? salvo.getId() : cursoFinal.getId();
-                            if (cursoId == null) {
-                                throw new SQLException("Falha ao gerar ID para curso.");
-                            }
-                            opcaoVinculoRepository.salvarVinculosCurso(entityManager, cursoId, opcaoIdsFinal);
-                            layoutCampoValueRepository.salvarValoresCurso(entityManager, cursoId, camposFinal);
-                            return cursoId;
-                        }
-                    }, "Falha ao cadastrar curso via repository.");
+        Curso salvo = cursoRepository.save(curso);
+        Long cursoId = salvo != null ? salvo.getId() : curso.getId();
+        if (cursoId == null) {
+            throw new SQLException("Falha ao gerar ID para curso.");
         }
-        throw new SQLException("Infraestrutura Spring Data/Transaction indisponivel para cadastrar curso.");
+        opcaoVinculoRepository.salvarVinculosCurso(cursoId, opcaoIds);
+        layoutCampoValueRepository.salvarValoresCurso(cursoId, camposComplementares);
+        return cursoId;
     }
 
+    @Transactional
     public void atualizar(Curso curso, long[] opcaoIds, Map<Long, String> camposComplementares) throws SQLException {
         validar(curso);
         if (curso.getId() == null) {
             throw new IllegalArgumentException("ID do curso e obrigatorio para alteracao.");
         }
-        if (canUseRepositoryWritePath()) {
-            final Curso cursoFinal = curso;
-            final long[] opcaoIdsFinal = opcaoIds;
-            final Map<Long, String> camposFinal = camposComplementares;
-            SpringBridge.inTransaction(transactionManager, entityManagerFactory,
-                    new SpringBridge.SqlWork<Void>() {
-                        public Void execute(EntityManager entityManager) throws SQLException {
-                            cursoRepository.save(cursoFinal);
-                            opcaoVinculoRepository.substituirVinculosCurso(entityManager, cursoFinal.getId(), opcaoIdsFinal);
-                            layoutCampoValueRepository.substituirValoresCurso(entityManager, cursoFinal.getId(), camposFinal);
-                            return null;
-                        }
-                    }, "Falha ao atualizar curso via repository.");
-            return;
-        }
-        throw new SQLException("Infraestrutura Spring Data/Transaction indisponivel para atualizar curso.");
+        cursoRepository.save(curso);
+        opcaoVinculoRepository.substituirVinculosCurso(curso.getId(), opcaoIds);
+        layoutCampoValueRepository.substituirValoresCurso(curso.getId(), camposComplementares);
     }
 
     public Curso buscarPorId(Long id) throws SQLException {
         if (id == null) {
             return null;
         }
-        if (cursoRepository != null) {
-            try {
-                Curso curso = cursoRepository.findOne(id);
-                hydrateResumo(curso);
-                return curso;
-            } catch (RuntimeException e) {
-                throw toSqlException("Falha ao buscar curso via repository.", e);
-            }
+        try {
+            Curso curso = cursoRepository.findOne(id);
+            hydrateResumo(curso);
+            return curso;
+        } catch (RuntimeException e) {
+            throw toSqlException("Falha ao buscar curso via repository.", e);
         }
-        throw new SQLException("CursoRepository indisponivel para buscar por ID.");
     }
 
     public List<Curso> listar() throws SQLException {
-        if (cursoRepository != null) {
-            try {
-                List<Curso> cursos = cursoRepository.findAll(new Sort(Sort.Direction.ASC, "nome"));
-                hydrateResumo(cursos);
-                return cursos;
-            } catch (RuntimeException e) {
-                throw toSqlException("Falha ao listar cursos via repository.", e);
-            }
+        try {
+            List<Curso> cursos = cursoRepository.findAll(new Sort(Sort.Direction.ASC, "nome"));
+            hydrateResumo(cursos);
+            return cursos;
+        } catch (RuntimeException e) {
+            throw toSqlException("Falha ao listar cursos via repository.", e);
         }
-        throw new SQLException("CursoRepository indisponivel para listagem.");
     }
 
     public List<Curso> listarPaginado(int pagina, int tamanhoPagina) throws SQLException {
-        if (cursoRepository != null) {
-            int page = pagina <= 0 ? 0 : pagina - 1;
-            int size = tamanhoPagina <= 0 ? 10 : tamanhoPagina;
-            try {
-                List<Curso> cursos = cursoRepository.findAll(
-                        new PageRequest(page, size, new Sort(Sort.Direction.ASC, "nome"))).getContent();
-                hydrateResumo(cursos);
-                return cursos;
-            } catch (RuntimeException e) {
-                throw toSqlException("Falha ao listar cursos paginados via repository.", e);
-            }
+        int page = pagina <= 0 ? 0 : pagina - 1;
+        int size = tamanhoPagina <= 0 ? 10 : tamanhoPagina;
+        try {
+            List<Curso> cursos = cursoRepository.findAll(
+                    new PageRequest(page, size, new Sort(Sort.Direction.ASC, "nome"))).getContent();
+            hydrateResumo(cursos);
+            return cursos;
+        } catch (RuntimeException e) {
+            throw toSqlException("Falha ao listar cursos paginados via repository.", e);
         }
-        throw new SQLException("CursoRepository indisponivel para listagem paginada.");
     }
 
     public int contar() throws SQLException {
-        if (cursoRepository != null) {
-            try {
-                long total = cursoRepository.count();
-                return total > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) total;
-            } catch (RuntimeException e) {
-                throw toSqlException("Falha ao contar cursos via repository.", e);
-            }
+        try {
+            long total = cursoRepository.count();
+            return total > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) total;
+        } catch (RuntimeException e) {
+            throw toSqlException("Falha ao contar cursos via repository.", e);
         }
-        throw new SQLException("CursoRepository indisponivel para contagem.");
     }
 
+    @Transactional
     public void excluir(Long id) throws SQLException {
         if (id == null) {
             return;
         }
-        if (canUseRepositoryWritePath()) {
-            final Long idFinal = id;
-            SpringBridge.inTransaction(transactionManager, entityManagerFactory,
-                    new SpringBridge.SqlWork<Void>() {
-                        public Void execute(EntityManager entityManager) throws SQLException {
-                            opcaoVinculoRepository.removerVinculosCurso(entityManager, idFinal);
-                            layoutCampoValueRepository.removerValoresCurso(entityManager, idFinal);
-                            if (cursoRepository.exists(idFinal)) {
-                                cursoRepository.delete(idFinal);
-                            }
-                            return null;
-                        }
-                    }, "Falha ao excluir curso via repository.");
-            return;
+        opcaoVinculoRepository.removerVinculosCurso(id);
+        layoutCampoValueRepository.removerValoresCurso(id);
+        if (cursoRepository.exists(id)) {
+            cursoRepository.delete(id);
         }
-        throw new SQLException("Infraestrutura Spring Data/Transaction indisponivel para excluir curso.");
     }
 
     public List<Long> listarOpcaoRecursoAssistivoIds(Long cursoId) throws SQLException {
-        if (opcaoVinculoRepository != null) {
-            return opcaoVinculoRepository.listarIdsCurso(cursoId, CategoriasOpcao.CURSO_RECURSO_TECNOLOGIA_ASSISTIVA);
-        }
-        return new ArrayList<Long>();
+        return opcaoVinculoRepository.listarIdsCurso(cursoId, CategoriasOpcao.CURSO_RECURSO_TECNOLOGIA_ASSISTIVA);
     }
 
     public Map<Long, String> carregarCamposComplementaresPorCampoId(Long cursoId) throws SQLException {
@@ -212,11 +155,6 @@ public class CursoService {
         return new SQLException(mensagem, e);
     }
 
-    private boolean canUseRepositoryWritePath() {
-        return cursoRepository != null && opcaoVinculoRepository != null
-                && transactionManager != null && entityManagerFactory != null;
-    }
-
     private void hydrateResumo(List<Curso> cursos) throws SQLException {
         if (cursos == null || cursos.isEmpty()) {
             return;
@@ -227,7 +165,7 @@ public class CursoService {
     }
 
     private void hydrateResumo(Curso curso) throws SQLException {
-        if (curso == null || curso.getId() == null || opcaoVinculoRepository == null) {
+        if (curso == null || curso.getId() == null) {
             return;
         }
         curso.setRecursosTecnologiaAssistivaResumo(
@@ -273,9 +211,7 @@ public class CursoService {
     private String exportarLinhaTxtPipe(Curso curso) throws SQLException {
         Map<Integer, String> valores = layoutCampoValueRepository.carregarValoresCursoPorNumero(curso.getId(), ModulosLayout.CURSO_21);
         Set<String> codigos = new HashSet<String>();
-        if (opcaoVinculoRepository != null) {
-            codigos.addAll(opcaoVinculoRepository.listarCodigosCurso(curso.getId(), CategoriasOpcao.CURSO_RECURSO_TECNOLOGIA_ASSISTIVA));
-        }
+        codigos.addAll(opcaoVinculoRepository.listarCodigosCurso(curso.getId(), CategoriasOpcao.CURSO_RECURSO_TECNOLOGIA_ASSISTIVA));
 
         int max = 67;
         String[] campos = new String[max];
@@ -356,7 +292,7 @@ public class CursoService {
 
     private List<Long> layoutOpcoesRecursosAssistivos() throws SQLException {
         List<Long> ids = new ArrayList<Long>();
-        List<br.gov.inep.censo.model.OpcaoDominio> itens = new CatalogoService().listarOpcoesPorCategoria(
+        List<br.gov.inep.censo.model.OpcaoDominio> itens = catalogoService.listarOpcoesPorCategoria(
                 CategoriasOpcao.CURSO_RECURSO_TECNOLOGIA_ASSISTIVA);
         addByCode(itens, ids, "BRAILLE");
         addByCode(itens, ids, "AUDIO");
@@ -423,5 +359,3 @@ public class CursoService {
         return Integer.valueOf(Integer.parseInt(value));
     }
 }
-
-

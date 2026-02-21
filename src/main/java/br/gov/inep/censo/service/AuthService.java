@@ -2,22 +2,22 @@ package br.gov.inep.censo.service;
 
 import br.gov.inep.censo.model.Usuario;
 import br.gov.inep.censo.repository.UsuarioRepository;
-import br.gov.inep.censo.spring.SpringBridge;
 import br.gov.inep.censo.util.PasswordUtil;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.SQLException;
 
 /**
  * Servico de autenticacao para manter a regra fora do servlet.
  */
+@Service
 public class AuthService {
 
     private final UsuarioRepository usuarioRepository;
 
-    public AuthService() {
-        this(SpringBridge.getBean(UsuarioRepository.class));
-    }
-
+    @Autowired
     public AuthService(UsuarioRepository usuarioRepository) {
         this.usuarioRepository = usuarioRepository;
     }
@@ -43,6 +43,7 @@ public class AuthService {
         throw new SQLException("UsuarioRepository indisponivel para autenticacao.");
     }
 
+    @Transactional
     private Usuario autenticarComRepository(String login, String senha) throws SQLException {
         try {
             Usuario usuario = usuarioRepository.findByLogin(login);

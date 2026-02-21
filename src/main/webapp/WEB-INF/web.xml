@@ -20,8 +20,12 @@
         <param-value></param-value>
     </context-param>
     <context-param>
+        <param-name>contextClass</param-name>
+        <param-value>org.springframework.web.context.support.AnnotationConfigWebApplicationContext</param-value>
+    </context-param>
+    <context-param>
         <param-name>contextConfigLocation</param-name>
-        <param-value>classpath:/spring/applicationContext.xml,classpath:/spring/security-context.xml</param-value>
+        <param-value>br.gov.inep.censo.config.AppConfig br.gov.inep.censo.config.JpaConfig br.gov.inep.censo.config.SecurityConfig</param-value>
     </context-param>
 
     <listener>
@@ -69,8 +73,12 @@
         <servlet-name>springMvc</servlet-name>
         <servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
         <init-param>
+            <param-name>contextClass</param-name>
+            <param-value>org.springframework.web.context.support.AnnotationConfigWebApplicationContext</param-value>
+        </init-param>
+        <init-param>
             <param-name>contextConfigLocation</param-name>
-            <param-value>classpath:/spring/mvc-context.xml</param-value>
+            <param-value>br.gov.inep.censo.config.MvcConfig</param-value>
         </init-param>
         <load-on-startup>1</load-on-startup>
     </servlet>

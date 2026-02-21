@@ -8,7 +8,7 @@ Este arquivo acompanha a evolucao real da migracao. Atualizar a cada merge de br
 | --- | --- | --- | --- | --- |
 | 1 | `main` | Java 8 com comportamento preservado | Concluida | 2026-02-11 |
 | 2 | `feature/zk8-bootstrap-ui` | ZK 8.6.0.1 + Bootstrap + frontend | Concluida | 2026-02-20 |
-| 3 | `feature/springboot-modernization` | Spring Boot + Data + Security + MVC | Planejada | - |
+| 3 | `feature/springboot-modernization` | Spring Boot + Data + Security + MVC | Concluida | 2026-02-20 |
 | 4 | `feature/zk-mvvm-final` | Migracao final MVC -> MVVM | Planejada | - |
 
 ## Fase 1 - `main`
@@ -103,18 +103,99 @@ Testes existentes mantidos e passando:
 ## Fase 3 - `feature/springboot-modernization`
 
 ### Escopo
-1. Migracao para Spring Boot.
-2. Introducao de Spring Data, Spring Security e Spring MVC.
-3. Eliminacao gradual da camada DAO legada.
+1. Eliminar instanciacao direta `new XxxService()` nos Composers ZK.
+2. Migrar XML de configuracao Spring para classes `@Configuration` Java.
+3. Introduzir `@Service` + `@Autowired` em todos os services.
+4. Introduzir `@Component` + `@PersistenceContext` nos repositories custom.
+5. Reativar testes de integracao de `service/*` com Spring Context + H2 in-memory.
+6. Manter WAR deployavel sem regressao funcional.
 
 ### Mudancas realizadas
-1. Em aberto.
+
+#### Services — injecao de dependencia completa
+Todos os services refatorados para `@Service` + `@Autowired` (construtor), sem `new` legado e sem `SpringBridge`:
+
+| Service | Mudancas |
+|---|---|
+| `CatalogoService` | `@Service`, construtor `@Autowired(OpcaoDominioRepository, LayoutCampoRepository)` |
+| `AuthService` | `@Service`, construtor `@Autowired(UsuarioRepository)`, `@Transactional` em `autenticarComRepository` |
+| `AlunoService` | `@Service`, construtor `@Autowired(LayoutCampoValueRepository, AlunoRepository, OpcaoVinculoRepository, CatalogoService)`, `@Transactional` em CRUD |
+| `CursoService` | `@Service`, construtor `@Autowired` com `CatalogoService`, `@Transactional` em CRUD |
+| `DocenteService` | `@Service`, construtor `@Autowired(LayoutCampoValueRepository, DocenteRepository, MunicipioRepository)`, `@Transactional` |
+| `IesService` | `@Service`, construtor `@Autowired`, `@Transactional` |
+| `CursoAlunoService` | `@Service`, construtor `@Autowired(CursoAlunoRepository, OpcaoVinculoRepository, LayoutCampoValueRepository)` + `@PersistenceContext EntityManager` para `getReference()`, `@Transactional` |
+
+Removidos: construtores no-arg, campos `PlatformTransactionManager`, `EntityManagerFactory` e chamadas a `SpringBridge.getBean()`.
+
+#### Repositories custom — @Component + @PersistenceContext
+| Repository | Mudancas |
+|---|---|
+| `OpcaoVinculoRepository` | `@Component`, `@PersistenceContext EntityManager entityManager` (campo de instancia), sem `EntityManagerFactory`, sem parametro EM nos metodos |
+| `LayoutCampoValueRepository` | Mesmo padrao |
+
+#### Composers ZK — SpringUtil.getBean() lazy
+Todos os Composers substituiram campos `private final XxxService = new XxxService()` por metodos privados lazy que delegam ao contexto Spring via `SpringUtil.getBean("beanName")`:
+
+| Composer | Metodos de servico adicionados |
+|---|---|
+| `LoginComposer` | `authService()` |
+| `AlunoComposer` | `alunoService()`, `catalogoService()` |
+| `CursoComposer` | `cursoService()`, `catalogoService()` |
+| `DocenteComposer` | `docenteService()`, `catalogoService()` |
+| `IesComposer` | `iesService()`, `catalogoService()` |
+| `CursoAlunoComposer` | `cursoAlunoService()`, `alunoService()`, `cursoService()`, `catalogoService()` |
+
+Padrao adotado (ZK 8 aceita apenas `String` no `SpringUtil.getBean()`):
+```java
+private AlunoService alunoService() {
+    return (AlunoService) SpringUtil.getBean("alunoService");
+}
+```
+
+#### Configuracao Spring — XML substituido por @Configuration Java
+Quatro classes `@Configuration` criadas em `br.gov.inep.censo.config`:
+
+| Classe | Substitui | Responsabilidade |
+|---|---|---|
+| `AppConfig` | `applicationContext.xml` (parcial) | `@ComponentScan(service, repository)`, `DataSource` bean, `@EnableTransactionManagement` |
+| `JpaConfig` | `applicationContext.xml` (JPA) | `@EnableJpaRepositories`, `LocalContainerEntityManagerFactoryBean`, `JpaTransactionManager` |
+| `SecurityConfig` | `security-context.xml` | `WebSecurityConfigurerAdapter`, `SessionUsuarioAuthenticationFilter`, `UsuarioAuthenticationProvider` |
+| `MvcConfig` | `mvc-context.xml` | `@EnableWebMvc`, `@ComponentScan("br.gov.inep.censo.web.spring")` |
+
+#### web.xml — AnnotationConfigWebApplicationContext
+Trocado o mecanismo de boot do contexto Spring:
+- `contextClass` = `AnnotationConfigWebApplicationContext`
+- `contextConfigLocation` = `AppConfig JpaConfig SecurityConfig` (espaco-separados)
+- DispatcherServlet: `contextClass` = `AnnotationConfigWebApplicationContext`, `contextConfigLocation` = `MvcConfig`
+
+Os XMLs originais (`applicationContext.xml`, `security-context.xml`, `mvc-context.xml`) foram mantidos no repositorio como referencia historica.
+
+#### Testes — reativados com Spring Context
+Testes de integracao reativados (removido `@Ignore`):
+
+| Classe | Abordagem | Testes |
+|---|---|---|
+| `AuthServiceTest` | `@RunWith(SpringJUnit4ClassRunner.class)` + `@ContextConfiguration(TestDatabaseConfig.class)` + `@Autowired AuthService` | 2 |
+| `CatalogoServiceTest` | Mesmo padrao + `@Autowired CatalogoService` | 1 |
+| `CursoAlunoServiceTest` | Unit test com Mockito, construtor atualizado para 3 params (sem TM/EMF) | 2 |
+
+`TestDatabaseConfig` criado em `src/test/java`: H2 in-memory + EmbeddedDatabaseBuilder + todos os scripts SQL + JPA + `@ComponentScan(service, repository)`.
+
+#### pom.xml
+- `junit` atualizado de `4.11` para `4.12` (exigido por `SpringJUnit4ClassRunner`).
+- `spring-test` `4.3.30.RELEASE` adicionado como dependencia de teste.
 
 ### Evidencias
-1. Em aberto.
+- `mvn clean test` em 2026-02-20: **BUILD SUCCESS**.
+- Resultado: `Tests run: 59, Failures: 0, Errors: 0, Skipped: 0`.
+- JaCoCo check `util/*`: cobertura de linhas >= 30% (threshold atendido).
+- Zero instancias de `new XxxService()` nos Composers.
+- Zero referencias a `SpringBridge.getBean()` nos Services e Repositories.
 
-### Pendencias
-1. Em aberto.
+### Pendencias para Fase 4
+- Migracao MVC -> MVVM (ViewModels ZK 8).
+- Elevar threshold JaCoCo para `service/*` e `repository/*`.
+- Considerar remocao dos XMLs legados (`applicationContext.xml`, `security-context.xml`, `mvc-context.xml`).
 
 ## Fase 4 - `feature/zk-mvvm-final`
 

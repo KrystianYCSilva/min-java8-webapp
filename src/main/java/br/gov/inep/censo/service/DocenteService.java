@@ -5,14 +5,13 @@ import br.gov.inep.censo.model.Docente;
 import br.gov.inep.censo.repository.DocenteRepository;
 import br.gov.inep.censo.repository.LayoutCampoValueRepository;
 import br.gov.inep.censo.repository.MunicipioRepository;
-import br.gov.inep.censo.spring.SpringBridge;
 import br.gov.inep.censo.util.ValidationUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
-import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import javax.persistence.EntityManager;
-import javax.persistence.EntityManagerFactory;
 import java.sql.Date;
 import java.sql.SQLException;
 import java.text.ParseException;
@@ -23,146 +22,92 @@ import java.util.Map;
 /**
  * Servico de negocio do modulo Docente.
  */
+@Service
 public class DocenteService {
 
     private final LayoutCampoValueRepository layoutCampoValueRepository;
     private final DocenteRepository docenteRepository;
     private final MunicipioRepository municipioRepository;
-    private final PlatformTransactionManager transactionManager;
-    private final EntityManagerFactory entityManagerFactory;
 
-    public DocenteService() {
-        this(new LayoutCampoValueRepository(),
-                SpringBridge.getBean(DocenteRepository.class),
-                SpringBridge.getBean(MunicipioRepository.class),
-                SpringBridge.getBean(PlatformTransactionManager.class),
-                SpringBridge.getBean(EntityManagerFactory.class));
-    }
-
+    @Autowired
     public DocenteService(LayoutCampoValueRepository layoutCampoValueRepository,
                           DocenteRepository docenteRepository,
-                          MunicipioRepository municipioRepository,
-                          PlatformTransactionManager transactionManager,
-                          EntityManagerFactory entityManagerFactory) {
+                          MunicipioRepository municipioRepository) {
         this.layoutCampoValueRepository = layoutCampoValueRepository;
         this.docenteRepository = docenteRepository;
         this.municipioRepository = municipioRepository;
-        this.transactionManager = transactionManager;
-        this.entityManagerFactory = entityManagerFactory;
     }
 
+    @Transactional
     public Long cadastrar(Docente docente, Map<Long, String> camposComplementares) throws SQLException {
         validar(docente);
-        if (canUseRepositoryWritePath()) {
-            final Docente docenteFinal = docente;
-            final Map<Long, String> camposFinal = camposComplementares;
-            return SpringBridge.inTransaction(transactionManager, entityManagerFactory,
-                    new SpringBridge.SqlWork<Long>() {
-                        public Long execute(EntityManager entityManager) throws SQLException {
-                            Docente salvo = docenteRepository.save(docenteFinal);
-                            Long docenteId = salvo != null ? salvo.getId() : docenteFinal.getId();
-                            if (docenteId == null) {
-                                throw new SQLException("Falha ao gerar ID para docente.");
-                            }
-                            layoutCampoValueRepository.salvarValoresDocente(entityManager, docenteId, camposFinal);
-                            return docenteId;
-                        }
-                    }, "Falha ao cadastrar docente via repository.");
+        Docente salvo = docenteRepository.save(docente);
+        Long docenteId = salvo != null ? salvo.getId() : docente.getId();
+        if (docenteId == null) {
+            throw new SQLException("Falha ao gerar ID para docente.");
         }
-        throw new SQLException("Infraestrutura Spring Data/Transaction indisponivel para cadastrar docente.");
+        layoutCampoValueRepository.salvarValoresDocente(docenteId, camposComplementares);
+        return docenteId;
     }
 
+    @Transactional
     public void atualizar(Docente docente, Map<Long, String> camposComplementares) throws SQLException {
         validar(docente);
         if (docente.getId() == null) {
             throw new IllegalArgumentException("ID do docente e obrigatorio para alteracao.");
         }
-        if (canUseRepositoryWritePath()) {
-            final Docente docenteFinal = docente;
-            final Map<Long, String> camposFinal = camposComplementares;
-            SpringBridge.inTransaction(transactionManager, entityManagerFactory,
-                    new SpringBridge.SqlWork<Void>() {
-                        public Void execute(EntityManager entityManager) throws SQLException {
-                            docenteRepository.save(docenteFinal);
-                            layoutCampoValueRepository.substituirValoresDocente(entityManager, docenteFinal.getId(), camposFinal);
-                            return null;
-                        }
-                    }, "Falha ao atualizar docente via repository.");
-            return;
-        }
-        throw new SQLException("Infraestrutura Spring Data/Transaction indisponivel para atualizar docente.");
+        docenteRepository.save(docente);
+        layoutCampoValueRepository.substituirValoresDocente(docente.getId(), camposComplementares);
     }
 
     public Docente buscarPorId(Long id) throws SQLException {
         if (id == null) {
             return null;
         }
-        if (docenteRepository != null) {
-            try {
-                return docenteRepository.findOne(id);
-            } catch (RuntimeException e) {
-                throw toSqlException("Falha ao buscar docente via repository.", e);
-            }
+        try {
+            return docenteRepository.findOne(id);
+        } catch (RuntimeException e) {
+            throw toSqlException("Falha ao buscar docente via repository.", e);
         }
-        throw new SQLException("DocenteRepository indisponivel para buscar por ID.");
     }
 
     public List<Docente> listar() throws SQLException {
-        if (docenteRepository != null) {
-            try {
-                return docenteRepository.findAll(new Sort(Sort.Direction.ASC, "nome"));
-            } catch (RuntimeException e) {
-                throw toSqlException("Falha ao listar docentes via repository.", e);
-            }
+        try {
+            return docenteRepository.findAll(new Sort(Sort.Direction.ASC, "nome"));
+        } catch (RuntimeException e) {
+            throw toSqlException("Falha ao listar docentes via repository.", e);
         }
-        throw new SQLException("DocenteRepository indisponivel para listagem.");
     }
 
     public List<Docente> listarPaginado(int pagina, int tamanhoPagina) throws SQLException {
-        if (docenteRepository != null) {
-            int page = pagina <= 0 ? 0 : pagina - 1;
-            int size = tamanhoPagina <= 0 ? 10 : tamanhoPagina;
-            try {
-                return docenteRepository.findAll(
-                        new PageRequest(page, size, new Sort(Sort.Direction.ASC, "nome"))).getContent();
-            } catch (RuntimeException e) {
-                throw toSqlException("Falha ao listar docentes paginados via repository.", e);
-            }
+        int page = pagina <= 0 ? 0 : pagina - 1;
+        int size = tamanhoPagina <= 0 ? 10 : tamanhoPagina;
+        try {
+            return docenteRepository.findAll(
+                    new PageRequest(page, size, new Sort(Sort.Direction.ASC, "nome"))).getContent();
+        } catch (RuntimeException e) {
+            throw toSqlException("Falha ao listar docentes paginados via repository.", e);
         }
-        throw new SQLException("DocenteRepository indisponivel para listagem paginada.");
     }
 
     public int contar() throws SQLException {
-        if (docenteRepository != null) {
-            try {
-                long total = docenteRepository.count();
-                return total > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) total;
-            } catch (RuntimeException e) {
-                throw toSqlException("Falha ao contar docentes via repository.", e);
-            }
+        try {
+            long total = docenteRepository.count();
+            return total > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) total;
+        } catch (RuntimeException e) {
+            throw toSqlException("Falha ao contar docentes via repository.", e);
         }
-        throw new SQLException("DocenteRepository indisponivel para contagem.");
     }
 
+    @Transactional
     public void excluir(Long id) throws SQLException {
         if (id == null) {
             return;
         }
-        if (canUseRepositoryWritePath()) {
-            final Long idFinal = id;
-            SpringBridge.inTransaction(transactionManager, entityManagerFactory,
-                    new SpringBridge.SqlWork<Void>() {
-                        public Void execute(EntityManager entityManager) throws SQLException {
-                            layoutCampoValueRepository.removerValoresDocente(entityManager, idFinal);
-                            if (docenteRepository.exists(idFinal)) {
-                                docenteRepository.delete(idFinal);
-                            }
-                            return null;
-                        }
-                    }, "Falha ao excluir docente via repository.");
-            return;
+        layoutCampoValueRepository.removerValoresDocente(id);
+        if (docenteRepository.exists(id)) {
+            docenteRepository.delete(id);
         }
-        throw new SQLException("Infraestrutura Spring Data/Transaction indisponivel para excluir docente.");
     }
 
     public Map<Long, String> carregarCamposComplementaresPorCampoId(Long docenteId) throws SQLException {
@@ -195,10 +140,6 @@ public class DocenteService {
             return (SQLException) cause;
         }
         return new SQLException(mensagem, e);
-    }
-
-    private boolean canUseRepositoryWritePath() {
-        return docenteRepository != null && transactionManager != null && entityManagerFactory != null;
     }
 
     public int importarTxtPipe(String conteudo) throws SQLException {
@@ -335,14 +276,11 @@ public class DocenteService {
         if (codigoMunicipio == null || codigoMunicipio.trim().length() == 0 || codigoUf == null) {
             return false;
         }
-        if (municipioRepository != null) {
-            try {
-                return municipioRepository.existsByCodigoAndCodigoUf(codigoMunicipio.trim(), codigoUf);
-            } catch (RuntimeException e) {
-                throw toSqlException("Falha ao validar municipio via repository.", e);
-            }
+        try {
+            return municipioRepository.existsByCodigoAndCodigoUf(codigoMunicipio.trim(), codigoUf);
+        } catch (RuntimeException e) {
+            throw toSqlException("Falha ao validar municipio via repository.", e);
         }
-        throw new SQLException("MunicipioRepository indisponivel para validacao.");
     }
 
     private String safeField(String[] campos, int numeroCampo) {
@@ -396,5 +334,3 @@ public class DocenteService {
         return new SimpleDateFormat("yyyyMMdd").format(new java.util.Date(date.getTime()));
     }
 }
-
-

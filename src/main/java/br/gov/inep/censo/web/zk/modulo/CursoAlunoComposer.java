@@ -8,6 +8,7 @@ import br.gov.inep.censo.service.CatalogoService;
 import br.gov.inep.censo.service.CursoAlunoService;
 import br.gov.inep.censo.service.CursoService;
 import br.gov.inep.censo.web.zk.AbstractBaseComposer;
+import org.zkoss.zkplus.spring.SpringUtil;
 import org.zkoss.zk.ui.select.annotation.Listen;
 import org.zkoss.zk.ui.select.annotation.Wire;
 import org.zkoss.zul.*;
@@ -24,10 +25,21 @@ public class CursoAlunoComposer extends AbstractBaseComposer {
 
     private static final long serialVersionUID = 1L;
 
-    private final CursoAlunoService cursoAlunoService = new CursoAlunoService();
-    private final AlunoService alunoService = new AlunoService();
-    private final CursoService cursoService = new CursoService();
-    private final CatalogoService catalogoService = new CatalogoService();
+    private CursoAlunoService cursoAlunoService() {
+        return (CursoAlunoService) SpringUtil.getBean("cursoAlunoService");
+    }
+
+    private AlunoService alunoService() {
+        return (AlunoService) SpringUtil.getBean("alunoService");
+    }
+
+    private CursoService cursoService() {
+        return (CursoService) SpringUtil.getBean("cursoService");
+    }
+
+    private CatalogoService catalogoService() {
+        return (CatalogoService) SpringUtil.getBean("catalogoService");
+    }
 
     // Lista
     @Wire
@@ -195,7 +207,7 @@ public class CursoAlunoComposer extends AbstractBaseComposer {
             long[] opcaoIds = mergeArrays(financiamentos, apoio, atividades, reservas);
 
             Map<Long, String> extras = mapCamposComplementares(camposComplementares);
-            cursoAlunoService.cadastrar(cursoAluno, opcaoIds, extras);
+            cursoAlunoService().cadastrar(cursoAluno, opcaoIds, extras);
             putFlash("flashCursoAlunoMessage", "Registro 42 salvo com sucesso.");
             goShell("curso-aluno-list");
         } catch (Exception e) {
@@ -205,7 +217,7 @@ public class CursoAlunoComposer extends AbstractBaseComposer {
 
     private void carregarLista() {
         try {
-            List<CursoAluno> vinculos = cursoAlunoService.listar();
+            List<CursoAluno> vinculos = cursoAlunoService().listar();
             lstCursoAluno.getItems().clear();
 
             for (int i = 0; i < vinculos.size(); i++) {
@@ -238,7 +250,7 @@ public class CursoAlunoComposer extends AbstractBaseComposer {
         alunoPlaceholder.setValue("");
         cmbAlunoCursoAluno.appendChild(alunoPlaceholder);
 
-        List<Aluno> alunos = alunoService.listar();
+        List<Aluno> alunos = alunoService().listar();
         for (int i = 0; i < alunos.size(); i++) {
             Aluno aluno = alunos.get(i);
             Comboitem item = new Comboitem(aluno.getNome() + " - CPF " + safe(aluno.getCpf()));
@@ -251,7 +263,7 @@ public class CursoAlunoComposer extends AbstractBaseComposer {
         cursoPlaceholder.setValue("");
         cmbCursoCursoAluno.appendChild(cursoPlaceholder);
 
-        List<Curso> cursos = cursoService.listar();
+        List<Curso> cursos = cursoService().listar();
         for (int i = 0; i < cursos.size(); i++) {
             Curso curso = cursos.get(i);
             Comboitem item = new Comboitem(safe(curso.getCodigoCursoEmec()) + " - " + safe(curso.getNome()));
@@ -290,13 +302,13 @@ public class CursoAlunoComposer extends AbstractBaseComposer {
     }
 
     private void popularOpcoes1N() throws Exception {
-        popularCheckboxes(catalogoService.listarOpcoesPorCategoria(CategoriasOpcao.CURSO_ALUNO_TIPO_FINANCIAMENTO),
+        popularCheckboxes(catalogoService().listarOpcoesPorCategoria(CategoriasOpcao.CURSO_ALUNO_TIPO_FINANCIAMENTO),
                 boxFinanciamentoCursoAluno, checksFinanciamento);
-        popularCheckboxes(catalogoService.listarOpcoesPorCategoria(CategoriasOpcao.CURSO_ALUNO_APOIO_SOCIAL),
+        popularCheckboxes(catalogoService().listarOpcoesPorCategoria(CategoriasOpcao.CURSO_ALUNO_APOIO_SOCIAL),
                 boxApoioCursoAluno, checksApoioSocial);
-        popularCheckboxes(catalogoService.listarOpcoesPorCategoria(CategoriasOpcao.CURSO_ALUNO_ATIVIDADE_EXTRACURRICULAR),
+        popularCheckboxes(catalogoService().listarOpcoesPorCategoria(CategoriasOpcao.CURSO_ALUNO_ATIVIDADE_EXTRACURRICULAR),
                 boxAtividadeCursoAluno, checksAtividade);
-        popularCheckboxes(catalogoService.listarOpcoesPorCategoria(CategoriasOpcao.CURSO_ALUNO_RESERVA_VAGA),
+        popularCheckboxes(catalogoService().listarOpcoesPorCategoria(CategoriasOpcao.CURSO_ALUNO_RESERVA_VAGA),
                 boxReservaCursoAluno, checksReserva);
     }
 
@@ -316,7 +328,7 @@ public class CursoAlunoComposer extends AbstractBaseComposer {
         boxCamposComplementaresCursoAluno.getChildren().clear();
         camposComplementares.clear();
 
-        List<LayoutCampo> campos = filtrarCamposComplementares(catalogoService.listarCamposModulo(ModulosLayout.ALUNO_42));
+        List<LayoutCampo> campos = filtrarCamposComplementares(catalogoService().listarCamposModulo(ModulosLayout.ALUNO_42));
         for (int i = 0; i < campos.size(); i++) {
             LayoutCampo campo = campos.get(i);
 

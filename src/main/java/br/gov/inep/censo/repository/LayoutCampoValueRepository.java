@@ -1,10 +1,10 @@
 package br.gov.inep.censo.repository;
 
 import br.gov.inep.censo.model.LayoutCampo;
-import br.gov.inep.censo.spring.SpringBridge;
+import org.springframework.stereotype.Component;
 
 import javax.persistence.EntityManager;
-import javax.persistence.EntityManagerFactory;
+import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 import javax.persistence.TypedQuery;
 import java.sql.SQLException;
@@ -15,183 +15,127 @@ import java.util.Map;
 /**
  * Repositorio custom para metadados de leiaute e valores complementares.
  */
+@Component
 public class LayoutCampoValueRepository {
 
-    private final EntityManagerFactory entityManagerFactory;
+    @PersistenceContext
+    private EntityManager entityManager;
 
-    private interface EntityManagerWork<T> {
-        T execute(EntityManager entityManager) throws SQLException;
+    public List<LayoutCampo> listarPorModulo(String modulo) throws SQLException {
+        try {
+            TypedQuery<LayoutCampo> query = entityManager.createQuery(
+                    "select l from LayoutCampo l where l.modulo = :modulo order by l.numeroCampo",
+                    LayoutCampo.class);
+            query.setParameter("modulo", modulo);
+            return query.getResultList();
+        } catch (RuntimeException e) {
+            throw toSqlException("Falha ao listar campos de layout.", e);
+        }
     }
 
-    public LayoutCampoValueRepository() {
-        this(SpringBridge.getBean(EntityManagerFactory.class));
+    public void salvarValoresAluno(Long alunoId, Map<Long, String> valores) {
+        salvarValores("aluno_layout_valor", "aluno_id", alunoId, valores);
     }
 
-    public LayoutCampoValueRepository(EntityManagerFactory entityManagerFactory) {
-        this.entityManagerFactory = entityManagerFactory;
+    public void salvarValoresCurso(Long cursoId, Map<Long, String> valores) {
+        salvarValores("curso_layout_valor", "curso_id", cursoId, valores);
     }
 
-    public List<LayoutCampo> listarPorModulo(final String modulo) throws SQLException {
-        return executeInEntityManager(new EntityManagerWork<List<LayoutCampo>>() {
-            public List<LayoutCampo> execute(EntityManager entityManager) {
-                TypedQuery<LayoutCampo> query = entityManager.createQuery(
-                        "select l from LayoutCampo l where l.modulo = :modulo order by l.numeroCampo",
-                        LayoutCampo.class);
-                query.setParameter("modulo", modulo);
-                return query.getResultList();
-            }
-        });
+    public void salvarValoresCursoAluno(Long cursoAlunoId, Map<Long, String> valores) {
+        salvarValores("curso_aluno_layout_valor", "curso_aluno_id", cursoAlunoId, valores);
     }
 
-    public void salvarValoresAluno(EntityManager entityManager, Long alunoId, Map<Long, String> valores) {
-        salvarValores(entityManager, "aluno_layout_valor", "aluno_id", alunoId, valores);
+    public void salvarValoresDocente(Long docenteId, Map<Long, String> valores) {
+        salvarValores("docente_layout_valor", "docente_id", docenteId, valores);
     }
 
-    public void salvarValoresCurso(EntityManager entityManager, Long cursoId, Map<Long, String> valores) {
-        salvarValores(entityManager, "curso_layout_valor", "curso_id", cursoId, valores);
+    public void salvarValoresIes(Long iesId, Map<Long, String> valores) {
+        salvarValores("ies_layout_valor", "ies_id", iesId, valores);
     }
 
-    public void salvarValoresCursoAluno(EntityManager entityManager, Long cursoAlunoId, Map<Long, String> valores) {
-        salvarValores(entityManager, "curso_aluno_layout_valor", "curso_aluno_id", cursoAlunoId, valores);
+    public void substituirValoresAluno(Long alunoId, Map<Long, String> valores) {
+        removerValores("aluno_layout_valor", "aluno_id", alunoId);
+        salvarValoresAluno(alunoId, valores);
     }
 
-    public void salvarValoresDocente(EntityManager entityManager, Long docenteId, Map<Long, String> valores) {
-        salvarValores(entityManager, "docente_layout_valor", "docente_id", docenteId, valores);
+    public void substituirValoresCurso(Long cursoId, Map<Long, String> valores) {
+        removerValores("curso_layout_valor", "curso_id", cursoId);
+        salvarValoresCurso(cursoId, valores);
     }
 
-    public void salvarValoresIes(EntityManager entityManager, Long iesId, Map<Long, String> valores) {
-        salvarValores(entityManager, "ies_layout_valor", "ies_id", iesId, valores);
+    public void substituirValoresCursoAluno(Long cursoAlunoId, Map<Long, String> valores) {
+        removerValores("curso_aluno_layout_valor", "curso_aluno_id", cursoAlunoId);
+        salvarValoresCursoAluno(cursoAlunoId, valores);
     }
 
-    public void substituirValoresAluno(EntityManager entityManager, Long alunoId, Map<Long, String> valores) {
-        removerValores(entityManager, "aluno_layout_valor", "aluno_id", alunoId);
-        salvarValoresAluno(entityManager, alunoId, valores);
+    public void substituirValoresDocente(Long docenteId, Map<Long, String> valores) {
+        removerValores("docente_layout_valor", "docente_id", docenteId);
+        salvarValoresDocente(docenteId, valores);
     }
 
-    public void substituirValoresCurso(EntityManager entityManager, Long cursoId, Map<Long, String> valores) {
-        removerValores(entityManager, "curso_layout_valor", "curso_id", cursoId);
-        salvarValoresCurso(entityManager, cursoId, valores);
+    public void substituirValoresIes(Long iesId, Map<Long, String> valores) {
+        removerValores("ies_layout_valor", "ies_id", iesId);
+        salvarValoresIes(iesId, valores);
     }
 
-    public void substituirValoresCursoAluno(EntityManager entityManager, Long cursoAlunoId, Map<Long, String> valores) {
-        removerValores(entityManager, "curso_aluno_layout_valor", "curso_aluno_id", cursoAlunoId);
-        salvarValoresCursoAluno(entityManager, cursoAlunoId, valores);
+    public void removerValoresAluno(Long alunoId) {
+        removerValores("aluno_layout_valor", "aluno_id", alunoId);
     }
 
-    public void substituirValoresDocente(EntityManager entityManager, Long docenteId, Map<Long, String> valores) {
-        removerValores(entityManager, "docente_layout_valor", "docente_id", docenteId);
-        salvarValoresDocente(entityManager, docenteId, valores);
+    public void removerValoresCurso(Long cursoId) {
+        removerValores("curso_layout_valor", "curso_id", cursoId);
     }
 
-    public void substituirValoresIes(EntityManager entityManager, Long iesId, Map<Long, String> valores) {
-        removerValores(entityManager, "ies_layout_valor", "ies_id", iesId);
-        salvarValoresIes(entityManager, iesId, valores);
+    public void removerValoresCursoAluno(Long cursoAlunoId) {
+        removerValores("curso_aluno_layout_valor", "curso_aluno_id", cursoAlunoId);
     }
 
-    public void removerValoresAluno(EntityManager entityManager, Long alunoId) {
-        removerValores(entityManager, "aluno_layout_valor", "aluno_id", alunoId);
+    public void removerValoresDocente(Long docenteId) {
+        removerValores("docente_layout_valor", "docente_id", docenteId);
     }
 
-    public void removerValoresCurso(EntityManager entityManager, Long cursoId) {
-        removerValores(entityManager, "curso_layout_valor", "curso_id", cursoId);
+    public void removerValoresIes(Long iesId) {
+        removerValores("ies_layout_valor", "ies_id", iesId);
     }
 
-    public void removerValoresCursoAluno(EntityManager entityManager, Long cursoAlunoId) {
-        removerValores(entityManager, "curso_aluno_layout_valor", "curso_aluno_id", cursoAlunoId);
+    public Map<Long, String> carregarValoresAlunoPorCampoId(Long alunoId) throws SQLException {
+        return carregarValoresPorCampoId("aluno_layout_valor", "aluno_id", alunoId);
     }
 
-    public void removerValoresDocente(EntityManager entityManager, Long docenteId) {
-        removerValores(entityManager, "docente_layout_valor", "docente_id", docenteId);
+    public Map<Long, String> carregarValoresCursoPorCampoId(Long cursoId) throws SQLException {
+        return carregarValoresPorCampoId("curso_layout_valor", "curso_id", cursoId);
     }
 
-    public void removerValoresIes(EntityManager entityManager, Long iesId) {
-        removerValores(entityManager, "ies_layout_valor", "ies_id", iesId);
+    public Map<Long, String> carregarValoresCursoAlunoPorCampoId(Long cursoAlunoId) throws SQLException {
+        return carregarValoresPorCampoId("curso_aluno_layout_valor", "curso_aluno_id", cursoAlunoId);
     }
 
-    public Map<Long, String> carregarValoresAlunoPorCampoId(final Long alunoId) throws SQLException {
-        return executeInEntityManager(new EntityManagerWork<Map<Long, String>>() {
-            public Map<Long, String> execute(EntityManager entityManager) {
-                return carregarValoresPorCampoId(entityManager, "aluno_layout_valor", "aluno_id", alunoId);
-            }
-        });
+    public Map<Long, String> carregarValoresDocentePorCampoId(Long docenteId) throws SQLException {
+        return carregarValoresPorCampoId("docente_layout_valor", "docente_id", docenteId);
     }
 
-    public Map<Long, String> carregarValoresCursoPorCampoId(final Long cursoId) throws SQLException {
-        return executeInEntityManager(new EntityManagerWork<Map<Long, String>>() {
-            public Map<Long, String> execute(EntityManager entityManager) {
-                return carregarValoresPorCampoId(entityManager, "curso_layout_valor", "curso_id", cursoId);
-            }
-        });
+    public Map<Long, String> carregarValoresIesPorCampoId(Long iesId) throws SQLException {
+        return carregarValoresPorCampoId("ies_layout_valor", "ies_id", iesId);
     }
 
-    public Map<Long, String> carregarValoresCursoAlunoPorCampoId(final Long cursoAlunoId) throws SQLException {
-        return executeInEntityManager(new EntityManagerWork<Map<Long, String>>() {
-            public Map<Long, String> execute(EntityManager entityManager) {
-                return carregarValoresPorCampoId(entityManager, "curso_aluno_layout_valor", "curso_aluno_id", cursoAlunoId);
-            }
-        });
+    public Map<Integer, String> carregarValoresAlunoPorNumero(Long alunoId, String modulo) throws SQLException {
+        return carregarValoresPorNumero("aluno_layout_valor", "aluno_id", alunoId, modulo);
     }
 
-    public Map<Long, String> carregarValoresDocentePorCampoId(final Long docenteId) throws SQLException {
-        return executeInEntityManager(new EntityManagerWork<Map<Long, String>>() {
-            public Map<Long, String> execute(EntityManager entityManager) {
-                return carregarValoresPorCampoId(entityManager, "docente_layout_valor", "docente_id", docenteId);
-            }
-        });
+    public Map<Integer, String> carregarValoresCursoPorNumero(Long cursoId, String modulo) throws SQLException {
+        return carregarValoresPorNumero("curso_layout_valor", "curso_id", cursoId, modulo);
     }
 
-    public Map<Long, String> carregarValoresIesPorCampoId(final Long iesId) throws SQLException {
-        return executeInEntityManager(new EntityManagerWork<Map<Long, String>>() {
-            public Map<Long, String> execute(EntityManager entityManager) {
-                return carregarValoresPorCampoId(entityManager, "ies_layout_valor", "ies_id", iesId);
-            }
-        });
+    public Map<Integer, String> carregarValoresCursoAlunoPorNumero(Long cursoAlunoId, String modulo) throws SQLException {
+        return carregarValoresPorNumero("curso_aluno_layout_valor", "curso_aluno_id", cursoAlunoId, modulo);
     }
 
-    public Map<Integer, String> carregarValoresAlunoPorNumero(final Long alunoId, final String modulo)
-            throws SQLException {
-        return executeInEntityManager(new EntityManagerWork<Map<Integer, String>>() {
-            public Map<Integer, String> execute(EntityManager entityManager) {
-                return carregarValoresPorNumero(entityManager, "aluno_layout_valor", "aluno_id", alunoId, modulo);
-            }
-        });
+    public Map<Integer, String> carregarValoresDocentePorNumero(Long docenteId, String modulo) throws SQLException {
+        return carregarValoresPorNumero("docente_layout_valor", "docente_id", docenteId, modulo);
     }
 
-    public Map<Integer, String> carregarValoresCursoPorNumero(final Long cursoId, final String modulo)
-            throws SQLException {
-        return executeInEntityManager(new EntityManagerWork<Map<Integer, String>>() {
-            public Map<Integer, String> execute(EntityManager entityManager) {
-                return carregarValoresPorNumero(entityManager, "curso_layout_valor", "curso_id", cursoId, modulo);
-            }
-        });
-    }
-
-    public Map<Integer, String> carregarValoresCursoAlunoPorNumero(final Long cursoAlunoId, final String modulo)
-            throws SQLException {
-        return executeInEntityManager(new EntityManagerWork<Map<Integer, String>>() {
-            public Map<Integer, String> execute(EntityManager entityManager) {
-                return carregarValoresPorNumero(
-                        entityManager, "curso_aluno_layout_valor", "curso_aluno_id", cursoAlunoId, modulo);
-            }
-        });
-    }
-
-    public Map<Integer, String> carregarValoresDocentePorNumero(final Long docenteId, final String modulo)
-            throws SQLException {
-        return executeInEntityManager(new EntityManagerWork<Map<Integer, String>>() {
-            public Map<Integer, String> execute(EntityManager entityManager) {
-                return carregarValoresPorNumero(entityManager, "docente_layout_valor", "docente_id", docenteId, modulo);
-            }
-        });
-    }
-
-    public Map<Integer, String> carregarValoresIesPorNumero(final Long iesId, final String modulo)
-            throws SQLException {
-        return executeInEntityManager(new EntityManagerWork<Map<Integer, String>>() {
-            public Map<Integer, String> execute(EntityManager entityManager) {
-                return carregarValoresPorNumero(entityManager, "ies_layout_valor", "ies_id", iesId, modulo);
-            }
-        });
+    public Map<Integer, String> carregarValoresIesPorNumero(Long iesId, String modulo) throws SQLException {
+        return carregarValoresPorNumero("ies_layout_valor", "ies_id", iesId, modulo);
     }
 
     public Map<Integer, Long> mapaCampoIdPorNumero(String modulo) throws SQLException {
@@ -204,8 +148,7 @@ public class LayoutCampoValueRepository {
         return mapa;
     }
 
-    private void salvarValores(EntityManager entityManager,
-                               String tabela,
+    private void salvarValores(String tabela,
                                String colunaFk,
                                Long fkValue,
                                Map<Long, String> valores) {
@@ -230,63 +173,69 @@ public class LayoutCampoValueRepository {
         }
     }
 
-    private Map<Long, String> carregarValoresPorCampoId(EntityManager entityManager,
-                                                        String tabela,
+    private Map<Long, String> carregarValoresPorCampoId(String tabela,
                                                         String colunaFk,
-                                                        Long fkValue) {
+                                                        Long fkValue) throws SQLException {
         Map<Long, String> valores = new LinkedHashMap<Long, String>();
         if (fkValue == null) {
             return valores;
         }
-        Query query = entityManager.createNativeQuery(
-                "SELECT layout_campo_id, valor FROM " + tabela + " WHERE " + colunaFk + " = :fkValue");
-        query.setParameter("fkValue", fkValue.longValue());
-        List rows = query.getResultList();
-        for (int i = 0; i < rows.size(); i++) {
-            Object row = rows.get(i);
-            if (!(row instanceof Object[])) {
-                continue;
+        try {
+            Query query = entityManager.createNativeQuery(
+                    "SELECT layout_campo_id, valor FROM " + tabela + " WHERE " + colunaFk + " = :fkValue");
+            query.setParameter("fkValue", fkValue.longValue());
+            List rows = query.getResultList();
+            for (int i = 0; i < rows.size(); i++) {
+                Object row = rows.get(i);
+                if (!(row instanceof Object[])) {
+                    continue;
+                }
+                Object[] values = (Object[]) row;
+                if (values.length < 2 || values[0] == null) {
+                    continue;
+                }
+                valores.put(toLong(values[0]), values[1] == null ? null : values[1].toString());
             }
-            Object[] values = (Object[]) row;
-            if (values.length < 2 || values[0] == null) {
-                continue;
-            }
-            valores.put(toLong(values[0]), values[1] == null ? null : values[1].toString());
+        } catch (RuntimeException e) {
+            throw toSqlException("Falha ao carregar valores de layout.", e);
         }
         return valores;
     }
 
-    private Map<Integer, String> carregarValoresPorNumero(EntityManager entityManager,
-                                                          String tabela,
+    private Map<Integer, String> carregarValoresPorNumero(String tabela,
                                                           String colunaFk,
                                                           Long fkValue,
-                                                          String modulo) {
+                                                          String modulo) throws SQLException {
         Map<Integer, String> valores = new LinkedHashMap<Integer, String>();
         if (fkValue == null) {
             return valores;
         }
-        Query query = entityManager.createNativeQuery(
-                "SELECT c.numero_campo, v.valor FROM " + tabela + " v " +
-                        "INNER JOIN layout_campo c ON c.id = v.layout_campo_id " +
-                        "WHERE v." + colunaFk + " = :fkValue AND c.modulo = :modulo");
-        query.setParameter("fkValue", fkValue.longValue());
-        query.setParameter("modulo", modulo);
-        List rows = query.getResultList();
-        for (int i = 0; i < rows.size(); i++) {
-            Object row = rows.get(i);
-            if (!(row instanceof Object[])) {
-                continue;
+        try {
+            Query query = entityManager.createNativeQuery(
+                    "SELECT c.numero_campo, v.valor FROM " + tabela + " v " +
+                            "INNER JOIN layout_campo c ON c.id = v.layout_campo_id " +
+                            "WHERE v." + colunaFk + " = :fkValue AND c.modulo = :modulo");
+            query.setParameter("fkValue", fkValue.longValue());
+            query.setParameter("modulo", modulo);
+            List rows = query.getResultList();
+            for (int i = 0; i < rows.size(); i++) {
+                Object row = rows.get(i);
+                if (!(row instanceof Object[])) {
+                    continue;
+                }
+                Object[] values = (Object[]) row;
+                if (values.length < 2 || values[0] == null) {
+                    continue;
+                }
+                valores.put(toInteger(values[0]), values[1] == null ? null : values[1].toString());
             }
-            Object[] values = (Object[]) row;
-            if (values.length < 2 || values[0] == null) {
-                continue;
-            }
-            valores.put(toInteger(values[0]), values[1] == null ? null : values[1].toString());
+        } catch (RuntimeException e) {
+            throw toSqlException("Falha ao carregar valores de layout por numero.", e);
         }
         return valores;
     }
 
-    private void removerValores(EntityManager entityManager, String tabela, String colunaFk, Long fkValue) {
+    private void removerValores(String tabela, String colunaFk, Long fkValue) {
         if (fkValue == null) {
             return;
         }
@@ -307,29 +256,6 @@ public class LayoutCampoValueRepository {
             return Integer.valueOf(((Number) value).intValue());
         }
         return Integer.valueOf(value.toString());
-    }
-
-    private <T> T executeInEntityManager(EntityManagerWork<T> work) throws SQLException {
-        if (entityManagerFactory == null) {
-            throw new SQLException("EntityManagerFactory indisponivel para LayoutCampoValueRepository.");
-        }
-        EntityManager entityManager = null;
-        try {
-            entityManager = entityManagerFactory.createEntityManager();
-            return work.execute(entityManager);
-        } catch (SQLException e) {
-            throw e;
-        } catch (RuntimeException e) {
-            throw toSqlException("Falha ao executar operacao de layout.", e);
-        } finally {
-            if (entityManager != null) {
-                try {
-                    entityManager.close();
-                } catch (RuntimeException ignored) {
-                    // noop
-                }
-            }
-        }
     }
 
     private SQLException toSqlException(String message, RuntimeException e) {

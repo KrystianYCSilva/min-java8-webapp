@@ -8,6 +8,7 @@ import br.gov.inep.censo.model.enums.TipoLaboratorioEnum;
 import br.gov.inep.censo.service.CatalogoService;
 import br.gov.inep.censo.service.IesService;
 import br.gov.inep.censo.web.zk.AbstractBaseComposer;
+import org.zkoss.zkplus.spring.SpringUtil;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.EventListener;
 import org.zkoss.zk.ui.event.Events;
@@ -28,8 +29,13 @@ public class IesComposer extends AbstractBaseComposer {
     private static final long serialVersionUID = 1L;
     private static final int TAMANHO_PAGINA = 10;
 
-    private final IesService iesService = new IesService();
-    private final CatalogoService catalogoService = new CatalogoService();
+    private IesService iesService() {
+        return (IesService) SpringUtil.getBean("iesService");
+    }
+
+    private CatalogoService catalogoService() {
+        return (CatalogoService) SpringUtil.getBean("catalogoService");
+    }
 
     // Lista
     @Wire
@@ -151,7 +157,7 @@ public class IesComposer extends AbstractBaseComposer {
     public void onClickBtnImportarListIes() {
         try {
             String conteudo = txtImportacaoListIes.getValue();
-            int total = iesService.importarTxtPipe(conteudo);
+            int total = iesService().importarTxtPipe(conteudo);
             putFlash("flashHomeMessage", "Importacao de IES concluida: " + total + " registro(s).");
             putFlash("flashIesMessage", "Importacao concluida: " + total + " registro(s).");
             goShell("ies-list");
@@ -181,7 +187,7 @@ public class IesComposer extends AbstractBaseComposer {
         lblErroFormIes.setValue("");
 
         try {
-            Ies ies = iesIdEdicao != null ? iesService.buscarPorId(iesIdEdicao) : new Ies();
+            Ies ies = iesIdEdicao != null ? iesService().buscarPorId(iesIdEdicao) : new Ies();
             if (ies == null) {
                 ies = new Ies();
                 iesIdEdicao = null;
@@ -224,10 +230,10 @@ public class IesComposer extends AbstractBaseComposer {
             Map<Long, String> extras = mapCamposComplementares(camposComplementares);
 
             if (iesIdEdicao == null) {
-                iesService.cadastrar(ies, extras);
+                iesService().cadastrar(ies, extras);
                 putFlash("flashIesMessage", "IES incluida com sucesso.");
             } else {
-                iesService.atualizar(ies, extras);
+                iesService().atualizar(ies, extras);
                 putFlash("flashIesMessage", "IES alterada com sucesso.");
             }
 
@@ -246,7 +252,7 @@ public class IesComposer extends AbstractBaseComposer {
         }
 
         try {
-            Ies ies = iesService.buscarPorId(iesIdVisualizacao);
+            Ies ies = iesService().buscarPorId(iesIdVisualizacao);
             if (ies == null) {
                 goShell("ies-list");
                 return;
@@ -291,13 +297,13 @@ public class IesComposer extends AbstractBaseComposer {
 
     private void carregarLista() {
         try {
-            int total = iesService.contar();
+            int total = iesService().contar();
             totalPaginas = total == 0 ? 1 : ((total + TAMANHO_PAGINA - 1) / TAMANHO_PAGINA);
             if (paginaAtual > totalPaginas) {
                 paginaAtual = totalPaginas;
             }
 
-            List<Ies> itens = iesService.listarPaginado(paginaAtual, TAMANHO_PAGINA);
+            List<Ies> itens = iesService().listarPaginado(paginaAtual, TAMANHO_PAGINA);
             lstIes.getItems().clear();
 
             for (int i = 0; i < itens.size(); i++) {
@@ -369,7 +375,7 @@ public class IesComposer extends AbstractBaseComposer {
 
     private void excluirIes(Long id) {
         try {
-            iesService.excluir(id);
+            iesService().excluir(id);
             lblFlashListIes.setVisible(true);
             lblFlashListIes.setValue("IES excluida com sucesso.");
             carregarLista();
@@ -452,10 +458,10 @@ public class IesComposer extends AbstractBaseComposer {
 
         Map<Long, String> valores = new LinkedHashMap<Long, String>();
         if (iesId != null) {
-            valores.putAll(iesService.carregarCamposComplementaresPorCampoId(iesId));
+            valores.putAll(iesService().carregarCamposComplementaresPorCampoId(iesId));
         }
 
-        List<LayoutCampo> campos = filtrarCamposComplementares(catalogoService.listarCamposModulo(ModulosLayout.IES_11));
+        List<LayoutCampo> campos = filtrarCamposComplementares(catalogoService().listarCamposModulo(ModulosLayout.IES_11));
         for (int i = 0; i < campos.size(); i++) {
             LayoutCampo campo = campos.get(i);
 
@@ -479,7 +485,7 @@ public class IesComposer extends AbstractBaseComposer {
     private void preencherCamposView(Long iesId) throws Exception {
         lstViewCamposIes.getItems().clear();
 
-        Map<Long, String> valores = iesService.carregarCamposComplementaresPorCampoId(iesId);
+        Map<Long, String> valores = iesService().carregarCamposComplementaresPorCampoId(iesId);
         Map<Long, String> rotulos = montarRotulosCampos(ModulosLayout.IES_11);
 
         if (valores == null || valores.isEmpty()) {
@@ -518,7 +524,7 @@ public class IesComposer extends AbstractBaseComposer {
 
     private Map<Long, String> montarRotulosCampos(String modulo) throws Exception {
         Map<Long, String> rotulos = new LinkedHashMap<Long, String>();
-        List<LayoutCampo> campos = catalogoService.listarCamposModulo(modulo);
+        List<LayoutCampo> campos = catalogoService().listarCamposModulo(modulo);
         if (campos == null) {
             return rotulos;
         }

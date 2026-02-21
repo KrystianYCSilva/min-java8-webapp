@@ -10,6 +10,7 @@ import br.gov.inep.censo.model.enums.NacionalidadeEnum;
 import br.gov.inep.censo.service.AlunoService;
 import br.gov.inep.censo.service.CatalogoService;
 import br.gov.inep.censo.web.zk.AbstractBaseComposer;
+import org.zkoss.zkplus.spring.SpringUtil;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.EventListener;
 import org.zkoss.zk.ui.event.Events;
@@ -28,8 +29,13 @@ public class AlunoComposer extends AbstractBaseComposer {
     private static final long serialVersionUID = 1L;
     private static final int TAMANHO_PAGINA = 10;
 
-    private final AlunoService alunoService = new AlunoService();
-    private final CatalogoService catalogoService = new CatalogoService();
+    private AlunoService alunoService() {
+        return (AlunoService) SpringUtil.getBean("alunoService");
+    }
+
+    private CatalogoService catalogoService() {
+        return (CatalogoService) SpringUtil.getBean("catalogoService");
+    }
 
     // Lista
     @Wire private Label lblErroListAluno;
@@ -119,7 +125,7 @@ public class AlunoComposer extends AbstractBaseComposer {
     public void onClickBtnImportarListAluno() {
         try {
             String conteudo = txtImportacaoListAluno.getValue();
-            int total = alunoService.importarTxtPipe(conteudo);
+            int total = alunoService().importarTxtPipe(conteudo);
             putFlash("flashHomeMessage", "Importacao de aluno concluida: " + total + " registro(s).");
             putFlash("flashAlunoMessage", "Importacao concluida: " + total + " registro(s).");
             goShell("aluno-list");
@@ -149,7 +155,7 @@ public class AlunoComposer extends AbstractBaseComposer {
         lblErroFormAluno.setValue("");
 
         try {
-            Aluno aluno = alunoIdEdicao != null ? alunoService.buscarPorId(alunoIdEdicao) : new Aluno();
+            Aluno aluno = alunoIdEdicao != null ? alunoService().buscarPorId(alunoIdEdicao) : new Aluno();
             if (aluno == null) {
                 aluno = new Aluno();
                 alunoIdEdicao = null;
@@ -204,11 +210,11 @@ public class AlunoComposer extends AbstractBaseComposer {
             Map<Long, String> extras = mapCamposComplementares(camposComplementares);
 
             if (alunoIdEdicao == null) {
-                alunoService.cadastrar(aluno, opcaoDeficienciaIds, extras);
+                alunoService().cadastrar(aluno, opcaoDeficienciaIds, extras);
                 putFlash("flashHomeMessage", "Cadastro de aluno realizado com sucesso.");
                 putFlash("flashAlunoMessage", "Aluno incluido com sucesso.");
             } else {
-                alunoService.atualizar(aluno, opcaoDeficienciaIds, extras);
+                alunoService().atualizar(aluno, opcaoDeficienciaIds, extras);
                 putFlash("flashAlunoMessage", "Aluno alterado com sucesso.");
             }
 
@@ -227,7 +233,7 @@ public class AlunoComposer extends AbstractBaseComposer {
         }
 
         try {
-            Aluno aluno = alunoService.buscarPorId(alunoIdVisualizacao);
+            Aluno aluno = alunoService().buscarPorId(alunoIdVisualizacao);
             if (aluno == null) {
                 goShell("aluno-list");
                 return;
@@ -272,13 +278,13 @@ public class AlunoComposer extends AbstractBaseComposer {
 
     private void carregarLista() {
         try {
-            int total = alunoService.contar();
+            int total = alunoService().contar();
             totalPaginas = total == 0 ? 1 : ((total + TAMANHO_PAGINA - 1) / TAMANHO_PAGINA);
             if (paginaAtual > totalPaginas) {
                 paginaAtual = totalPaginas;
             }
 
-            List<Aluno> alunos = alunoService.listarPaginado(paginaAtual, TAMANHO_PAGINA);
+            List<Aluno> alunos = alunoService().listarPaginado(paginaAtual, TAMANHO_PAGINA);
             lstAlunos.getItems().clear();
 
             for (int i = 0; i < alunos.size(); i++) {
@@ -346,7 +352,7 @@ public class AlunoComposer extends AbstractBaseComposer {
 
     private void excluirAluno(Long id) {
         try {
-            alunoService.excluir(id);
+            alunoService().excluir(id);
             lblFlashListAluno.setVisible(true);
             lblFlashListAluno.setValue("Aluno excluido com sucesso.");
             carregarLista();
@@ -406,10 +412,10 @@ public class AlunoComposer extends AbstractBaseComposer {
 
         Set<Long> selecionados = new HashSet<Long>();
         if (alunoId != null) {
-            selecionados.addAll(alunoService.listarOpcaoDeficienciaIds(alunoId));
+            selecionados.addAll(alunoService().listarOpcaoDeficienciaIds(alunoId));
         }
 
-        List<OpcaoDominio> opcoes = catalogoService.listarOpcoesPorCategoria(CategoriasOpcao.ALUNO_TIPO_DEFICIENCIA);
+        List<OpcaoDominio> opcoes = catalogoService().listarOpcoesPorCategoria(CategoriasOpcao.ALUNO_TIPO_DEFICIENCIA);
         for (int i = 0; i < opcoes.size(); i++) {
             OpcaoDominio opcao = opcoes.get(i);
             Checkbox check = new Checkbox(opcao.getNome());
@@ -425,10 +431,10 @@ public class AlunoComposer extends AbstractBaseComposer {
 
         Map<Long, String> valores = new LinkedHashMap<Long, String>();
         if (alunoId != null) {
-            valores.putAll(alunoService.carregarCamposComplementaresPorCampoId(alunoId));
+            valores.putAll(alunoService().carregarCamposComplementaresPorCampoId(alunoId));
         }
 
-        List<LayoutCampo> campos = filtrarCamposComplementares(catalogoService.listarCamposModulo(ModulosLayout.ALUNO_41));
+        List<LayoutCampo> campos = filtrarCamposComplementares(catalogoService().listarCamposModulo(ModulosLayout.ALUNO_41));
         for (int i = 0; i < campos.size(); i++) {
             LayoutCampo campo = campos.get(i);
 
@@ -453,7 +459,7 @@ public class AlunoComposer extends AbstractBaseComposer {
     private void preencherCamposView(Long alunoId) throws Exception {
         lstViewCamposAluno.getItems().clear();
 
-        Map<Long, String> valores = alunoService.carregarCamposComplementaresPorCampoId(alunoId);
+        Map<Long, String> valores = alunoService().carregarCamposComplementaresPorCampoId(alunoId);
         Map<Long, String> rotulos = montarRotulosCampos(ModulosLayout.ALUNO_41);
 
         if (valores == null || valores.isEmpty()) {
@@ -493,7 +499,7 @@ public class AlunoComposer extends AbstractBaseComposer {
 
     private Map<Long, String> montarRotulosCampos(String modulo) throws Exception {
         Map<Long, String> rotulos = new LinkedHashMap<Long, String>();
-        List<LayoutCampo> campos = catalogoService.listarCamposModulo(modulo);
+        List<LayoutCampo> campos = catalogoService().listarCamposModulo(modulo);
         if (campos == null) {
             return rotulos;
         }

@@ -10,6 +10,7 @@ import br.gov.inep.censo.model.enums.NivelAcademicoEnum;
 import br.gov.inep.censo.service.CatalogoService;
 import br.gov.inep.censo.service.CursoService;
 import br.gov.inep.censo.web.zk.AbstractBaseComposer;
+import org.zkoss.zkplus.spring.SpringUtil;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.EventListener;
 import org.zkoss.zk.ui.event.Events;
@@ -27,8 +28,13 @@ public class CursoComposer extends AbstractBaseComposer {
     private static final long serialVersionUID = 1L;
     private static final int TAMANHO_PAGINA = 10;
 
-    private final CursoService cursoService = new CursoService();
-    private final CatalogoService catalogoService = new CatalogoService();
+    private CursoService cursoService() {
+        return (CursoService) SpringUtil.getBean("cursoService");
+    }
+
+    private CatalogoService catalogoService() {
+        return (CatalogoService) SpringUtil.getBean("catalogoService");
+    }
 
     // Lista
     @Wire private Label lblErroListCurso;
@@ -110,7 +116,7 @@ public class CursoComposer extends AbstractBaseComposer {
     public void onClickBtnImportarListCurso() {
         try {
             String conteudo = txtImportacaoListCurso.getValue();
-            int total = cursoService.importarTxtPipe(conteudo);
+            int total = cursoService().importarTxtPipe(conteudo);
             putFlash("flashHomeMessage", "Importacao de curso concluida: " + total + " registro(s).");
             putFlash("flashCursoMessage", "Importacao concluida: " + total + " registro(s).");
             goShell("curso-list");
@@ -140,7 +146,7 @@ public class CursoComposer extends AbstractBaseComposer {
         lblErroFormCurso.setValue("");
 
         try {
-            Curso curso = cursoIdEdicao != null ? cursoService.buscarPorId(cursoIdEdicao) : new Curso();
+            Curso curso = cursoIdEdicao != null ? cursoService().buscarPorId(cursoIdEdicao) : new Curso();
             if (curso == null) {
                 curso = new Curso();
                 cursoIdEdicao = null;
@@ -180,10 +186,10 @@ public class CursoComposer extends AbstractBaseComposer {
             Map<Long, String> extras = mapCamposComplementares(camposComplementares);
 
             if (cursoIdEdicao == null) {
-                cursoService.cadastrar(curso, recursos, extras);
+                cursoService().cadastrar(curso, recursos, extras);
                 putFlash("flashCursoMessage", "Curso incluido com sucesso.");
             } else {
-                cursoService.atualizar(curso, recursos, extras);
+                cursoService().atualizar(curso, recursos, extras);
                 putFlash("flashCursoMessage", "Curso alterado com sucesso.");
             }
 
@@ -202,7 +208,7 @@ public class CursoComposer extends AbstractBaseComposer {
         }
 
         try {
-            Curso curso = cursoService.buscarPorId(cursoIdVisualizacao);
+            Curso curso = cursoService().buscarPorId(cursoIdVisualizacao);
             if (curso == null) {
                 goShell("curso-list");
                 return;
@@ -243,13 +249,13 @@ public class CursoComposer extends AbstractBaseComposer {
 
     private void carregarLista() {
         try {
-            int total = cursoService.contar();
+            int total = cursoService().contar();
             totalPaginas = total == 0 ? 1 : ((total + TAMANHO_PAGINA - 1) / TAMANHO_PAGINA);
             if (paginaAtual > totalPaginas) {
                 paginaAtual = totalPaginas;
             }
 
-            List<Curso> cursos = cursoService.listarPaginado(paginaAtual, TAMANHO_PAGINA);
+            List<Curso> cursos = cursoService().listarPaginado(paginaAtual, TAMANHO_PAGINA);
             lstCursos.getItems().clear();
 
             for (int i = 0; i < cursos.size(); i++) {
@@ -317,7 +323,7 @@ public class CursoComposer extends AbstractBaseComposer {
 
     private void excluirCurso(Long id) {
         try {
-            cursoService.excluir(id);
+            cursoService().excluir(id);
             lblFlashListCurso.setVisible(true);
             lblFlashListCurso.setValue("Curso excluido com sucesso.");
             carregarLista();
@@ -375,10 +381,10 @@ public class CursoComposer extends AbstractBaseComposer {
 
         Set<Long> selecionados = new HashSet<Long>();
         if (cursoId != null) {
-            selecionados.addAll(cursoService.listarOpcaoRecursoAssistivoIds(cursoId));
+            selecionados.addAll(cursoService().listarOpcaoRecursoAssistivoIds(cursoId));
         }
 
-        List<OpcaoDominio> opcoes = catalogoService.listarOpcoesPorCategoria(
+        List<OpcaoDominio> opcoes = catalogoService().listarOpcoesPorCategoria(
                 CategoriasOpcao.CURSO_RECURSO_TECNOLOGIA_ASSISTIVA);
         for (int i = 0; i < opcoes.size(); i++) {
             OpcaoDominio opcao = opcoes.get(i);
@@ -395,10 +401,10 @@ public class CursoComposer extends AbstractBaseComposer {
 
         Map<Long, String> valores = new LinkedHashMap<Long, String>();
         if (cursoId != null) {
-            valores.putAll(cursoService.carregarCamposComplementaresPorCampoId(cursoId));
+            valores.putAll(cursoService().carregarCamposComplementaresPorCampoId(cursoId));
         }
 
-        List<LayoutCampo> campos = filtrarCamposComplementares(catalogoService.listarCamposModulo(ModulosLayout.CURSO_21));
+        List<LayoutCampo> campos = filtrarCamposComplementares(catalogoService().listarCamposModulo(ModulosLayout.CURSO_21));
         for (int i = 0; i < campos.size(); i++) {
             LayoutCampo campo = campos.get(i);
 
@@ -422,7 +428,7 @@ public class CursoComposer extends AbstractBaseComposer {
     private void preencherCamposView(Long cursoId) throws Exception {
         lstViewCamposCurso.getItems().clear();
 
-        Map<Long, String> valores = cursoService.carregarCamposComplementaresPorCampoId(cursoId);
+        Map<Long, String> valores = cursoService().carregarCamposComplementaresPorCampoId(cursoId);
         Map<Long, String> rotulos = montarRotulosCampos(ModulosLayout.CURSO_21);
 
         if (valores == null || valores.isEmpty()) {
@@ -461,7 +467,7 @@ public class CursoComposer extends AbstractBaseComposer {
 
     private Map<Long, String> montarRotulosCampos(String modulo) throws Exception {
         Map<Long, String> rotulos = new LinkedHashMap<Long, String>();
-        List<LayoutCampo> campos = catalogoService.listarCamposModulo(modulo);
+        List<LayoutCampo> campos = catalogoService().listarCamposModulo(modulo);
         if (campos == null) {
             return rotulos;
         }

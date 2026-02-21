@@ -6,14 +6,13 @@ import br.gov.inep.censo.model.Aluno;
 import br.gov.inep.censo.repository.AlunoRepository;
 import br.gov.inep.censo.repository.LayoutCampoValueRepository;
 import br.gov.inep.censo.repository.OpcaoVinculoRepository;
-import br.gov.inep.censo.spring.SpringBridge;
 import br.gov.inep.censo.util.ValidationUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
-import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import javax.persistence.EntityManager;
-import javax.persistence.EntityManagerFactory;
 import java.sql.Date;
 import java.sql.SQLException;
 import java.text.ParseException;
@@ -23,164 +22,108 @@ import java.util.*;
 /**
  * Servico de negocio do modulo Aluno.
  */
+@Service
 public class AlunoService {
 
     private final LayoutCampoValueRepository layoutCampoValueRepository;
     private final AlunoRepository alunoRepository;
     private final OpcaoVinculoRepository opcaoVinculoRepository;
-    private final PlatformTransactionManager transactionManager;
-    private final EntityManagerFactory entityManagerFactory;
+    private final CatalogoService catalogoService;
 
-    public AlunoService() {
-        this(new LayoutCampoValueRepository(),
-                SpringBridge.getBean(AlunoRepository.class),
-                new OpcaoVinculoRepository(),
-                SpringBridge.getBean(PlatformTransactionManager.class),
-                SpringBridge.getBean(EntityManagerFactory.class));
-    }
-
+    @Autowired
     public AlunoService(LayoutCampoValueRepository layoutCampoValueRepository,
                         AlunoRepository alunoRepository,
                         OpcaoVinculoRepository opcaoVinculoRepository,
-                        PlatformTransactionManager transactionManager,
-                        EntityManagerFactory entityManagerFactory) {
+                        CatalogoService catalogoService) {
         this.layoutCampoValueRepository = layoutCampoValueRepository;
         this.alunoRepository = alunoRepository;
         this.opcaoVinculoRepository = opcaoVinculoRepository;
-        this.transactionManager = transactionManager;
-        this.entityManagerFactory = entityManagerFactory;
+        this.catalogoService = catalogoService;
     }
 
+    @Transactional
     public Long cadastrar(Aluno aluno, long[] opcaoIds, Map<Long, String> camposComplementares) throws SQLException {
         validar(aluno);
-        if (canUseRepositoryWritePath()) {
-            final Aluno alunoFinal = aluno;
-            final long[] opcaoIdsFinal = opcaoIds;
-            final Map<Long, String> camposFinal = camposComplementares;
-            return SpringBridge.inTransaction(transactionManager, entityManagerFactory,
-                    new SpringBridge.SqlWork<Long>() {
-                        public Long execute(EntityManager entityManager) throws SQLException {
-                            Aluno salvo = alunoRepository.save(alunoFinal);
-                            Long alunoId = salvo != null ? salvo.getId() : alunoFinal.getId();
-                            if (alunoId == null) {
-                                throw new SQLException("Falha ao gerar ID para aluno.");
-                            }
-                            opcaoVinculoRepository.salvarVinculosAluno(entityManager, alunoId, opcaoIdsFinal);
-                            layoutCampoValueRepository.salvarValoresAluno(entityManager, alunoId, camposFinal);
-                            return alunoId;
-                        }
-                    }, "Falha ao cadastrar aluno via repository.");
+        Aluno salvo = alunoRepository.save(aluno);
+        Long alunoId = salvo != null ? salvo.getId() : aluno.getId();
+        if (alunoId == null) {
+            throw new SQLException("Falha ao gerar ID para aluno.");
         }
-        throw new SQLException("Infraestrutura Spring Data/Transaction indisponivel para cadastrar aluno.");
+        opcaoVinculoRepository.salvarVinculosAluno(alunoId, opcaoIds);
+        layoutCampoValueRepository.salvarValoresAluno(alunoId, camposComplementares);
+        return alunoId;
     }
 
+    @Transactional
     public void atualizar(Aluno aluno, long[] opcaoIds, Map<Long, String> camposComplementares) throws SQLException {
         validar(aluno);
         if (aluno.getId() == null) {
             throw new IllegalArgumentException("ID do aluno e obrigatorio para alteracao.");
         }
-        if (canUseRepositoryWritePath()) {
-            final Aluno alunoFinal = aluno;
-            final long[] opcaoIdsFinal = opcaoIds;
-            final Map<Long, String> camposFinal = camposComplementares;
-            SpringBridge.inTransaction(transactionManager, entityManagerFactory,
-                    new SpringBridge.SqlWork<Void>() {
-                        public Void execute(EntityManager entityManager) throws SQLException {
-                            alunoRepository.save(alunoFinal);
-                            opcaoVinculoRepository.substituirVinculosAluno(entityManager, alunoFinal.getId(), opcaoIdsFinal);
-                            layoutCampoValueRepository.substituirValoresAluno(entityManager, alunoFinal.getId(), camposFinal);
-                            return null;
-                        }
-                    }, "Falha ao atualizar aluno via repository.");
-            return;
-        }
-        throw new SQLException("Infraestrutura Spring Data/Transaction indisponivel para atualizar aluno.");
+        alunoRepository.save(aluno);
+        opcaoVinculoRepository.substituirVinculosAluno(aluno.getId(), opcaoIds);
+        layoutCampoValueRepository.substituirValoresAluno(aluno.getId(), camposComplementares);
     }
 
     public Aluno buscarPorId(Long id) throws SQLException {
         if (id == null) {
             return null;
         }
-        if (alunoRepository != null) {
-            try {
-                Aluno aluno = alunoRepository.findOne(id);
-                hydrateResumo(aluno);
-                return aluno;
-            } catch (RuntimeException e) {
-                throw toSqlException("Falha ao buscar aluno via repository.", e);
-            }
+        try {
+            Aluno aluno = alunoRepository.findOne(id);
+            hydrateResumo(aluno);
+            return aluno;
+        } catch (RuntimeException e) {
+            throw toSqlException("Falha ao buscar aluno via repository.", e);
         }
-        throw new SQLException("AlunoRepository indisponivel para buscar por ID.");
     }
 
     public List<Aluno> listar() throws SQLException {
-        if (alunoRepository != null) {
-            try {
-                List<Aluno> alunos = alunoRepository.findAll(new Sort(Sort.Direction.ASC, "nome"));
-                hydrateResumo(alunos);
-                return alunos;
-            } catch (RuntimeException e) {
-                throw toSqlException("Falha ao listar alunos via repository.", e);
-            }
+        try {
+            List<Aluno> alunos = alunoRepository.findAll(new Sort(Sort.Direction.ASC, "nome"));
+            hydrateResumo(alunos);
+            return alunos;
+        } catch (RuntimeException e) {
+            throw toSqlException("Falha ao listar alunos via repository.", e);
         }
-        throw new SQLException("AlunoRepository indisponivel para listagem.");
     }
 
     public List<Aluno> listarPaginado(int pagina, int tamanhoPagina) throws SQLException {
-        if (alunoRepository != null) {
-            int page = pagina <= 0 ? 0 : pagina - 1;
-            int size = tamanhoPagina <= 0 ? 10 : tamanhoPagina;
-            try {
-                List<Aluno> alunos = alunoRepository.findAll(
-                        new PageRequest(page, size, new Sort(Sort.Direction.ASC, "nome"))).getContent();
-                hydrateResumo(alunos);
-                return alunos;
-            } catch (RuntimeException e) {
-                throw toSqlException("Falha ao listar alunos paginados via repository.", e);
-            }
+        int page = pagina <= 0 ? 0 : pagina - 1;
+        int size = tamanhoPagina <= 0 ? 10 : tamanhoPagina;
+        try {
+            List<Aluno> alunos = alunoRepository.findAll(
+                    new PageRequest(page, size, new Sort(Sort.Direction.ASC, "nome"))).getContent();
+            hydrateResumo(alunos);
+            return alunos;
+        } catch (RuntimeException e) {
+            throw toSqlException("Falha ao listar alunos paginados via repository.", e);
         }
-        throw new SQLException("AlunoRepository indisponivel para listagem paginada.");
     }
 
     public int contar() throws SQLException {
-        if (alunoRepository != null) {
-            try {
-                long total = alunoRepository.count();
-                return total > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) total;
-            } catch (RuntimeException e) {
-                throw toSqlException("Falha ao contar alunos via repository.", e);
-            }
+        try {
+            long total = alunoRepository.count();
+            return total > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) total;
+        } catch (RuntimeException e) {
+            throw toSqlException("Falha ao contar alunos via repository.", e);
         }
-        throw new SQLException("AlunoRepository indisponivel para contagem.");
     }
 
+    @Transactional
     public void excluir(Long id) throws SQLException {
         if (id == null) {
             return;
         }
-        if (canUseRepositoryWritePath()) {
-            final Long idFinal = id;
-            SpringBridge.inTransaction(transactionManager, entityManagerFactory,
-                    new SpringBridge.SqlWork<Void>() {
-                        public Void execute(EntityManager entityManager) throws SQLException {
-                            opcaoVinculoRepository.removerVinculosAluno(entityManager, idFinal);
-                            layoutCampoValueRepository.removerValoresAluno(entityManager, idFinal);
-                            if (alunoRepository.exists(idFinal)) {
-                                alunoRepository.delete(idFinal);
-                            }
-                            return null;
-                        }
-                    }, "Falha ao excluir aluno via repository.");
-            return;
+        opcaoVinculoRepository.removerVinculosAluno(id);
+        layoutCampoValueRepository.removerValoresAluno(id);
+        if (alunoRepository.exists(id)) {
+            alunoRepository.delete(id);
         }
-        throw new SQLException("Infraestrutura Spring Data/Transaction indisponivel para excluir aluno.");
     }
 
     public List<Long> listarOpcaoDeficienciaIds(Long alunoId) throws SQLException {
-        if (opcaoVinculoRepository != null) {
-            return opcaoVinculoRepository.listarIdsAluno(alunoId, CategoriasOpcao.ALUNO_TIPO_DEFICIENCIA);
-        }
-        return new ArrayList<Long>();
+        return opcaoVinculoRepository.listarIdsAluno(alunoId, CategoriasOpcao.ALUNO_TIPO_DEFICIENCIA);
     }
 
     public Map<Long, String> carregarCamposComplementaresPorCampoId(Long alunoId) throws SQLException {
@@ -215,11 +158,6 @@ public class AlunoService {
         return new SQLException(mensagem, e);
     }
 
-    private boolean canUseRepositoryWritePath() {
-        return alunoRepository != null && opcaoVinculoRepository != null
-                && transactionManager != null && entityManagerFactory != null;
-    }
-
     private void hydrateResumo(List<Aluno> alunos) throws SQLException {
         if (alunos == null || alunos.isEmpty()) {
             return;
@@ -230,7 +168,7 @@ public class AlunoService {
     }
 
     private void hydrateResumo(Aluno aluno) throws SQLException {
-        if (aluno == null || aluno.getId() == null || opcaoVinculoRepository == null) {
+        if (aluno == null || aluno.getId() == null) {
             return;
         }
         aluno.setTiposDeficienciaResumo(
@@ -282,9 +220,7 @@ public class AlunoService {
     private String exportarLinhaTxtPipe(Aluno aluno) throws SQLException {
         Map<Integer, String> valores = layoutCampoValueRepository.carregarValoresAlunoPorNumero(aluno.getId(), ModulosLayout.ALUNO_41);
         Set<String> codigosDeficiencia = new HashSet<String>();
-        if (opcaoVinculoRepository != null) {
-            codigosDeficiencia.addAll(opcaoVinculoRepository.listarCodigosAluno(aluno.getId(), CategoriasOpcao.ALUNO_TIPO_DEFICIENCIA));
-        }
+        codigosDeficiencia.addAll(opcaoVinculoRepository.listarCodigosAluno(aluno.getId(), CategoriasOpcao.ALUNO_TIPO_DEFICIENCIA));
 
         int max = 23;
         String[] campos = new String[max];
@@ -372,7 +308,7 @@ public class AlunoService {
 
     private List<Long> layoutOpcoesDeficiencia() throws SQLException {
         List<Long> ids = new ArrayList<Long>();
-        List<br.gov.inep.censo.model.OpcaoDominio> itens = new CatalogoService().listarOpcoesPorCategoria(
+        List<br.gov.inep.censo.model.OpcaoDominio> itens = catalogoService.listarOpcoesPorCategoria(
                 CategoriasOpcao.ALUNO_TIPO_DEFICIENCIA);
         for (int i = 0; i < itens.size(); i++) {
             String codigo = itens.get(i).getCodigo();
@@ -469,5 +405,3 @@ public class AlunoService {
         return new SimpleDateFormat("yyyyMMdd").format(new java.util.Date(date.getTime()));
     }
 }
-
-

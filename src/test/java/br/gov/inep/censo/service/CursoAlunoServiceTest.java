@@ -7,18 +7,10 @@ import br.gov.inep.censo.repository.OpcaoVinculoRepository;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.springframework.transaction.PlatformTransactionManager;
 
-import javax.persistence.EntityManagerFactory;
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
-
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.when;
 
 /**
  * Testes unitarios de validacao do servico de Registro 42.
@@ -34,12 +26,6 @@ public class CursoAlunoServiceTest {
     @Mock
     private LayoutCampoValueRepository layoutCampoValueRepository;
 
-    @Mock
-    private PlatformTransactionManager transactionManager;
-
-    @Mock
-    private EntityManagerFactory entityManagerFactory;
-
     private CursoAlunoService service;
 
     @Before
@@ -48,14 +34,9 @@ public class CursoAlunoServiceTest {
         service = new CursoAlunoService(
                 cursoAlunoRepository,
                 opcaoVinculoRepository,
-                layoutCampoValueRepository,
-                transactionManager,
-                entityManagerFactory
+                layoutCampoValueRepository
         );
     }
-
-    // Teste requer Spring Context (SpringBridge.inTransaction)
-    // Use testes de integração para validar cadastro completo
 
     @Test
     public void deveFalharQuandoPeriodoReferenciaInvalido() throws Exception {
@@ -82,9 +63,6 @@ public class CursoAlunoServiceTest {
             Assert.assertTrue(e.getMessage().contains("Semestre de ingresso"));
         }
     }
-
-    // Teste requer Spring Context (repository.findAllWithAlunoAndCursoOrderByIdDesc)
-    // Use testes de integração para validar listagem completa
 
     private CursoAluno novoCursoAlunoValido() {
         CursoAluno cursoAluno = new CursoAluno();

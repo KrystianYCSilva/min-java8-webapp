@@ -1,31 +1,37 @@
 package br.gov.inep.censo.service;
 
+import br.gov.inep.censo.config.TestDatabaseConfig;
 import br.gov.inep.censo.domain.CategoriasOpcao;
 import br.gov.inep.censo.domain.ModulosLayout;
 import br.gov.inep.censo.model.LayoutCampo;
 import br.gov.inep.censo.model.OpcaoDominio;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import java.util.List;
 
 /**
  * Testes de integracao para leitura de catalogos de opcoes e campos de leiaute.
  */
+@RunWith(SpringJUnit4ClassRunner.class)
+@ContextConfiguration(classes = TestDatabaseConfig.class)
 public class CatalogoServiceTest {
 
-    @Test
-    @Ignore("Requer Spring Context configurado (OpcaoDominioRepository, LayoutCampoRepository)")
-    public void deveCarregarCatalogoDeOpcoesELayout() throws Exception {
-        CatalogoService service = new CatalogoService();
+    @Autowired
+    private CatalogoService catalogoService;
 
-        List<OpcaoDominio> deficiencias = service.listarOpcoesPorCategoria(CategoriasOpcao.ALUNO_TIPO_DEFICIENCIA);
+    @Test
+    public void deveCarregarCatalogoDeOpcoesELayout() throws Exception {
+        List<OpcaoDominio> deficiencias = catalogoService.listarOpcoesPorCategoria(CategoriasOpcao.ALUNO_TIPO_DEFICIENCIA);
         Assert.assertTrue(deficiencias.size() >= 10);
 
-        List<LayoutCampo> camposAluno = service.listarCamposModulo(ModulosLayout.ALUNO_41);
-        List<LayoutCampo> camposCurso = service.listarCamposModulo(ModulosLayout.CURSO_21);
-        List<LayoutCampo> camposCursoAluno = service.listarCamposModulo(ModulosLayout.ALUNO_42);
+        List<LayoutCampo> camposAluno = catalogoService.listarCamposModulo(ModulosLayout.ALUNO_41);
+        List<LayoutCampo> camposCurso = catalogoService.listarCamposModulo(ModulosLayout.CURSO_21);
+        List<LayoutCampo> camposCursoAluno = catalogoService.listarCamposModulo(ModulosLayout.ALUNO_42);
 
         Assert.assertTrue(camposAluno.size() >= 23);
         Assert.assertTrue(camposCurso.size() >= 67);

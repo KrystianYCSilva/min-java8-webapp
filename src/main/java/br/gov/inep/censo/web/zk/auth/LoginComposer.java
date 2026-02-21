@@ -3,6 +3,7 @@ package br.gov.inep.censo.web.zk.auth;
 import br.gov.inep.censo.model.Usuario;
 import br.gov.inep.censo.service.AuthService;
 import br.gov.inep.censo.web.zk.AbstractBaseComposer;
+import org.zkoss.zkplus.spring.SpringUtil;
 import org.zkoss.zk.ui.select.annotation.Listen;
 import org.zkoss.zk.ui.select.annotation.Wire;
 import org.zkoss.zul.Label;
@@ -17,7 +18,9 @@ public class LoginComposer extends AbstractBaseComposer {
 
     private static final long serialVersionUID = 1L;
 
-    private final AuthService authService = new AuthService();
+    private AuthService authService() {
+        return (AuthService) SpringUtil.getBean("authService");
+    }
 
     @Wire
     private Textbox txtLogin;
@@ -53,7 +56,7 @@ public class LoginComposer extends AbstractBaseComposer {
         }
 
         try {
-            Usuario usuario = authService.autenticar(login, senha);
+            Usuario usuario = authService().autenticar(login, senha);
             if (usuario == null) {
                 showError("Credenciais invalidas.");
                 return;

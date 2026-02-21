@@ -1,9 +1,10 @@
 package br.gov.inep.censo.repository;
 
-import br.gov.inep.censo.spring.SpringBridge;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import javax.persistence.EntityManager;
-import javax.persistence.EntityManagerFactory;
+import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -14,119 +15,80 @@ import java.util.Set;
 /**
  * Repositorio custom para vinculos 1..N de opcoes de dominio por modulo.
  */
+@Component
 public class OpcaoVinculoRepository {
 
-    private final EntityManagerFactory entityManagerFactory;
+    @PersistenceContext
+    private EntityManager entityManager;
 
-    private interface EntityManagerWork<T> {
-        T execute(EntityManager entityManager) throws SQLException;
+    public void salvarVinculosAluno(Long alunoId, long[] opcaoIds) throws SQLException {
+        salvarVinculos("aluno_opcao", "aluno_id", alunoId, opcaoIds);
     }
 
-    public OpcaoVinculoRepository() {
-        this(SpringBridge.getBean(EntityManagerFactory.class));
+    public void salvarVinculosCurso(Long cursoId, long[] opcaoIds) throws SQLException {
+        salvarVinculos("curso_opcao", "curso_id", cursoId, opcaoIds);
     }
 
-    public OpcaoVinculoRepository(EntityManagerFactory entityManagerFactory) {
-        this.entityManagerFactory = entityManagerFactory;
+    public void salvarVinculosCursoAluno(Long cursoAlunoId, long[] opcaoIds) throws SQLException {
+        salvarVinculos("curso_aluno_opcao", "curso_aluno_id", cursoAlunoId, opcaoIds);
     }
 
-    public void salvarVinculosAluno(EntityManager entityManager, Long alunoId, long[] opcaoIds) throws SQLException {
-        salvarVinculos(entityManager, "aluno_opcao", "aluno_id", alunoId, opcaoIds);
+    public void substituirVinculosAluno(Long alunoId, long[] opcaoIds) throws SQLException {
+        removerVinculos("aluno_opcao", "aluno_id", alunoId);
+        salvarVinculosAluno(alunoId, opcaoIds);
     }
 
-    public void salvarVinculosCurso(EntityManager entityManager, Long cursoId, long[] opcaoIds) throws SQLException {
-        salvarVinculos(entityManager, "curso_opcao", "curso_id", cursoId, opcaoIds);
+    public void substituirVinculosCurso(Long cursoId, long[] opcaoIds) throws SQLException {
+        removerVinculos("curso_opcao", "curso_id", cursoId);
+        salvarVinculosCurso(cursoId, opcaoIds);
     }
 
-    public void salvarVinculosCursoAluno(EntityManager entityManager, Long cursoAlunoId, long[] opcaoIds) throws SQLException {
-        salvarVinculos(entityManager, "curso_aluno_opcao", "curso_aluno_id", cursoAlunoId, opcaoIds);
+    public void substituirVinculosCursoAluno(Long cursoAlunoId, long[] opcaoIds) throws SQLException {
+        removerVinculos("curso_aluno_opcao", "curso_aluno_id", cursoAlunoId);
+        salvarVinculosCursoAluno(cursoAlunoId, opcaoIds);
     }
 
-    public void substituirVinculosAluno(EntityManager entityManager, Long alunoId, long[] opcaoIds) throws SQLException {
-        removerVinculos(entityManager, "aluno_opcao", "aluno_id", alunoId);
-        salvarVinculosAluno(entityManager, alunoId, opcaoIds);
+    public void removerVinculosAluno(Long alunoId) throws SQLException {
+        removerVinculos("aluno_opcao", "aluno_id", alunoId);
     }
 
-    public void substituirVinculosCurso(EntityManager entityManager, Long cursoId, long[] opcaoIds) throws SQLException {
-        removerVinculos(entityManager, "curso_opcao", "curso_id", cursoId);
-        salvarVinculosCurso(entityManager, cursoId, opcaoIds);
+    public void removerVinculosCurso(Long cursoId) throws SQLException {
+        removerVinculos("curso_opcao", "curso_id", cursoId);
     }
 
-    public void substituirVinculosCursoAluno(EntityManager entityManager, Long cursoAlunoId, long[] opcaoIds)
-            throws SQLException {
-        removerVinculos(entityManager, "curso_aluno_opcao", "curso_aluno_id", cursoAlunoId);
-        salvarVinculosCursoAluno(entityManager, cursoAlunoId, opcaoIds);
+    public void removerVinculosCursoAluno(Long cursoAlunoId) throws SQLException {
+        removerVinculos("curso_aluno_opcao", "curso_aluno_id", cursoAlunoId);
     }
 
-    public void removerVinculosAluno(EntityManager entityManager, Long alunoId) throws SQLException {
-        removerVinculos(entityManager, "aluno_opcao", "aluno_id", alunoId);
+    public String resumirAluno(Long alunoId, String categoria) throws SQLException {
+        return resumir("aluno_opcao", "aluno_id", alunoId, categoria);
     }
 
-    public void removerVinculosCurso(EntityManager entityManager, Long cursoId) throws SQLException {
-        removerVinculos(entityManager, "curso_opcao", "curso_id", cursoId);
+    public String resumirCurso(Long cursoId, String categoria) throws SQLException {
+        return resumir("curso_opcao", "curso_id", cursoId, categoria);
     }
 
-    public void removerVinculosCursoAluno(EntityManager entityManager, Long cursoAlunoId) throws SQLException {
-        removerVinculos(entityManager, "curso_aluno_opcao", "curso_aluno_id", cursoAlunoId);
+    public String resumirCursoAluno(Long cursoAlunoId, String categoria) throws SQLException {
+        return resumir("curso_aluno_opcao", "curso_aluno_id", cursoAlunoId, categoria);
     }
 
-    public String resumirAluno(final Long alunoId, final String categoria) throws SQLException {
-        return executeInEntityManager(new EntityManagerWork<String>() {
-            public String execute(EntityManager entityManager) throws SQLException {
-                return resumir(entityManager, "aluno_opcao", "aluno_id", alunoId, categoria);
-            }
-        });
+    public List<Long> listarIdsAluno(Long alunoId, String categoria) throws SQLException {
+        return listarIds("aluno_opcao", "aluno_id", alunoId, categoria);
     }
 
-    public String resumirCurso(final Long cursoId, final String categoria) throws SQLException {
-        return executeInEntityManager(new EntityManagerWork<String>() {
-            public String execute(EntityManager entityManager) throws SQLException {
-                return resumir(entityManager, "curso_opcao", "curso_id", cursoId, categoria);
-            }
-        });
+    public List<Long> listarIdsCurso(Long cursoId, String categoria) throws SQLException {
+        return listarIds("curso_opcao", "curso_id", cursoId, categoria);
     }
 
-    public String resumirCursoAluno(final Long cursoAlunoId, final String categoria) throws SQLException {
-        return executeInEntityManager(new EntityManagerWork<String>() {
-            public String execute(EntityManager entityManager) throws SQLException {
-                return resumir(entityManager, "curso_aluno_opcao", "curso_aluno_id", cursoAlunoId, categoria);
-            }
-        });
+    public List<String> listarCodigosAluno(Long alunoId, String categoria) throws SQLException {
+        return listarCodigos("aluno_opcao", "aluno_id", alunoId, categoria);
     }
 
-    public List<Long> listarIdsAluno(final Long alunoId, final String categoria) throws SQLException {
-        return executeInEntityManager(new EntityManagerWork<List<Long>>() {
-            public List<Long> execute(EntityManager entityManager) throws SQLException {
-                return listarIds(entityManager, "aluno_opcao", "aluno_id", alunoId, categoria);
-            }
-        });
+    public List<String> listarCodigosCurso(Long cursoId, String categoria) throws SQLException {
+        return listarCodigos("curso_opcao", "curso_id", cursoId, categoria);
     }
 
-    public List<Long> listarIdsCurso(final Long cursoId, final String categoria) throws SQLException {
-        return executeInEntityManager(new EntityManagerWork<List<Long>>() {
-            public List<Long> execute(EntityManager entityManager) throws SQLException {
-                return listarIds(entityManager, "curso_opcao", "curso_id", cursoId, categoria);
-            }
-        });
-    }
-
-    public List<String> listarCodigosAluno(final Long alunoId, final String categoria) throws SQLException {
-        return executeInEntityManager(new EntityManagerWork<List<String>>() {
-            public List<String> execute(EntityManager entityManager) throws SQLException {
-                return listarCodigos(entityManager, "aluno_opcao", "aluno_id", alunoId, categoria);
-            }
-        });
-    }
-
-    public List<String> listarCodigosCurso(final Long cursoId, final String categoria) throws SQLException {
-        return executeInEntityManager(new EntityManagerWork<List<String>>() {
-            public List<String> execute(EntityManager entityManager) throws SQLException {
-                return listarCodigos(entityManager, "curso_opcao", "curso_id", cursoId, categoria);
-            }
-        });
-    }
-
-    private void salvarVinculos(EntityManager entityManager, String tabela, String colunaFk, Long fkValue, long[] opcaoIds) {
+    private void salvarVinculos(String tabela, String colunaFk, Long fkValue, long[] opcaoIds) {
         if (fkValue == null || opcaoIds == null || opcaoIds.length == 0) {
             return;
         }
@@ -143,7 +105,7 @@ public class OpcaoVinculoRepository {
         }
     }
 
-    private void removerVinculos(EntityManager entityManager, String tabela, String colunaFk, Long fkValue) {
+    private void removerVinculos(String tabela, String colunaFk, Long fkValue) {
         if (fkValue == null) {
             return;
         }
@@ -153,62 +115,69 @@ public class OpcaoVinculoRepository {
         deleteQuery.executeUpdate();
     }
 
-    private String resumir(EntityManager entityManager, String tabela, String colunaFk, Long fkValue, String categoria)
+    private String resumir(String tabela, String colunaFk, Long fkValue, String categoria)
             throws SQLException {
         if (fkValue == null) {
             return "";
         }
-        Query query = entityManager.createNativeQuery(
-                "SELECT o.nome FROM " + tabela + " r " +
-                        "INNER JOIN dominio_opcao o ON o.id = r.opcao_id " +
-                        "WHERE r." + colunaFk + " = :fkValue AND o.categoria = :categoria " +
-                        "ORDER BY o.nome");
-        query.setParameter("fkValue", fkValue.longValue());
-        query.setParameter("categoria", categoria);
-        List nomes = query.getResultList();
-        StringBuilder resumo = new StringBuilder();
-        for (int i = 0; i < nomes.size(); i++) {
-            Object nome = nomes.get(i);
-            if (nome == null) {
-                continue;
+        try {
+            Query query = entityManager.createNativeQuery(
+                    "SELECT o.nome FROM " + tabela + " r " +
+                            "INNER JOIN dominio_opcao o ON o.id = r.opcao_id " +
+                            "WHERE r." + colunaFk + " = :fkValue AND o.categoria = :categoria " +
+                            "ORDER BY o.nome");
+            query.setParameter("fkValue", fkValue.longValue());
+            query.setParameter("categoria", categoria);
+            List nomes = query.getResultList();
+            StringBuilder resumo = new StringBuilder();
+            for (int i = 0; i < nomes.size(); i++) {
+                Object nome = nomes.get(i);
+                if (nome == null) {
+                    continue;
+                }
+                if (resumo.length() > 0) {
+                    resumo.append(", ");
+                }
+                resumo.append(nome.toString());
             }
-            if (resumo.length() > 0) {
-                resumo.append(", ");
-            }
-            resumo.append(nome.toString());
+            return resumo.toString();
+        } catch (RuntimeException e) {
+            throw toSqlException("Falha ao resumir opcoes.", e);
         }
-        return resumo.toString();
     }
 
-    private List<Long> listarIds(EntityManager entityManager, String tabela, String colunaFk, Long fkValue, String categoria)
+    private List<Long> listarIds(String tabela, String colunaFk, Long fkValue, String categoria)
             throws SQLException {
         List<Long> ids = new ArrayList<Long>();
         if (fkValue == null) {
             return ids;
         }
-        Query query = entityManager.createNativeQuery(
-                "SELECT o.id FROM " + tabela + " r " +
-                        "INNER JOIN dominio_opcao o ON o.id = r.opcao_id " +
-                        "WHERE r." + colunaFk + " = :fkValue AND o.categoria = :categoria ORDER BY o.nome");
-        query.setParameter("fkValue", fkValue.longValue());
-        query.setParameter("categoria", categoria);
-        List rows = query.getResultList();
-        for (int i = 0; i < rows.size(); i++) {
-            Object value = rows.get(i);
-            if (value == null) {
-                continue;
+        try {
+            Query query = entityManager.createNativeQuery(
+                    "SELECT o.id FROM " + tabela + " r " +
+                            "INNER JOIN dominio_opcao o ON o.id = r.opcao_id " +
+                            "WHERE r." + colunaFk + " = :fkValue AND o.categoria = :categoria ORDER BY o.nome");
+            query.setParameter("fkValue", fkValue.longValue());
+            query.setParameter("categoria", categoria);
+            List rows = query.getResultList();
+            for (int i = 0; i < rows.size(); i++) {
+                Object value = rows.get(i);
+                if (value == null) {
+                    continue;
+                }
+                if (value instanceof Number) {
+                    ids.add(Long.valueOf(((Number) value).longValue()));
+                } else {
+                    ids.add(Long.valueOf(value.toString()));
+                }
             }
-            if (value instanceof Number) {
-                ids.add(Long.valueOf(((Number) value).longValue()));
-            } else {
-                ids.add(Long.valueOf(value.toString()));
-            }
+        } catch (RuntimeException e) {
+            throw toSqlException("Falha ao listar ids de opcoes.", e);
         }
         return ids;
     }
 
-    private List<String> listarCodigos(EntityManager entityManager,
-                                       String tabela,
+    private List<String> listarCodigos(String tabela,
                                        String colunaFk,
                                        Long fkValue,
                                        String categoria)
@@ -217,43 +186,24 @@ public class OpcaoVinculoRepository {
         if (fkValue == null) {
             return codigos;
         }
-        Query query = entityManager.createNativeQuery(
-                "SELECT o.codigo FROM " + tabela + " r " +
-                        "INNER JOIN dominio_opcao o ON o.id = r.opcao_id " +
-                        "WHERE r." + colunaFk + " = :fkValue AND o.categoria = :categoria ORDER BY o.nome");
-        query.setParameter("fkValue", fkValue.longValue());
-        query.setParameter("categoria", categoria);
-        List rows = query.getResultList();
-        for (int i = 0; i < rows.size(); i++) {
-            Object value = rows.get(i);
-            if (value != null) {
-                codigos.add(value.toString());
-            }
-        }
-        return codigos;
-    }
-
-    private <T> T executeInEntityManager(EntityManagerWork<T> work) throws SQLException {
-        if (entityManagerFactory == null) {
-            throw new SQLException("EntityManagerFactory indisponivel para OpcaoVinculoRepository.");
-        }
-        EntityManager entityManager = null;
         try {
-            entityManager = entityManagerFactory.createEntityManager();
-            return work.execute(entityManager);
-        } catch (SQLException e) {
-            throw e;
-        } catch (RuntimeException e) {
-            throw toSqlException("Falha ao executar operacao de opcao/vinculo.", e);
-        } finally {
-            if (entityManager != null) {
-                try {
-                    entityManager.close();
-                } catch (RuntimeException ignored) {
-                    // noop
+            Query query = entityManager.createNativeQuery(
+                    "SELECT o.codigo FROM " + tabela + " r " +
+                            "INNER JOIN dominio_opcao o ON o.id = r.opcao_id " +
+                            "WHERE r." + colunaFk + " = :fkValue AND o.categoria = :categoria ORDER BY o.nome");
+            query.setParameter("fkValue", fkValue.longValue());
+            query.setParameter("categoria", categoria);
+            List rows = query.getResultList();
+            for (int i = 0; i < rows.size(); i++) {
+                Object value = rows.get(i);
+                if (value != null) {
+                    codigos.add(value.toString());
                 }
             }
+        } catch (RuntimeException e) {
+            throw toSqlException("Falha ao listar codigos de opcoes.", e);
         }
+        return codigos;
     }
 
     private SQLException toSqlException(String message, RuntimeException e) {
