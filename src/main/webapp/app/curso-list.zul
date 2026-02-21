@@ -2,45 +2,40 @@
 <zk>
     <style src="/css/pdf-like.css"/>
 
-    <window id="winCursoList" apply="br.gov.inep.censo.web.zk.modulo.CursoComposer"
+    <window id="winCursoList"
+            apply="org.zkoss.bind.BindComposer"
+            viewModel="@id('vm') @init('br.gov.inep.censo.web.zk.modulo.CursoViewModel')"
             border="normal" width="100%" sclass="sheet" position="center,top"
             vflex="1">
         <vbox spacing="10px" width="100%">
             <label value="Curso" sclass="official-tag"/>
             <label value="Listagem de Cursos (Registro 21)" style="font-size:22px;font-weight:bold;"/>
             <label value="Total de registros:"/>
-            <label id="lblTotalListCurso" style="font-weight:bold;"/>
+            <label value="@load(vm.totalLabel)" style="font-weight:bold;"/>
 
-            <label id="lblErroListCurso" sclass="alert" visible="false"/>
-            <label id="lblFlashListCurso" sclass="ok" visible="false"/>
+            <label sclass="alert" value="@load(vm.erroList)" visible="@load(vm.erroListVisivel)"/>
+            <label sclass="ok"    value="@load(vm.flashList)" visible="@load(vm.flashListVisivel)"/>
 
             <hbox spacing="8px" sclass="top-actions">
-                <button id="btnNovoListCurso" label="Incluir via Formulario" sclass="btn"/>
-                <button id="btnExportarListCurso" label="Exportar TXT (pipe)" sclass="btn-outline"/>
-                <button id="btnMenuListCurso" label="Menu" sclass="btn-outline"/>
+                <button label="Incluir via Formulario"  sclass="btn"         onClick="@command('novo')"/>
+                <button label="Exportar TXT (pipe)"     sclass="btn-outline"  onClick="@command('exportarTodos')"/>
+                <button label="Menu"                    sclass="btn-outline"  onClick="@command('voltar')"/>
             </hbox>
 
             <label value="Importar TXT pipe (1 registro por linha, leiaute Registro 21)"/>
-            <textbox id="txtImportacaoListCurso" multiline="true" rows="5" width="100%"/>
-            <button id="btnImportarListCurso" label="Importar TXT" sclass="btn"/>
+            <textbox id="txtImportacao" multiline="true" rows="5" width="100%"/>
+            <button label="Importar TXT" sclass="btn"
+                    onClick="@command('importar', conteudo=txtImportacao.value)"/>
 
-            <listbox id="lstCursos" width="100%" mold="paging" pageSize="10">
-                <listhead sizable="true">
-                    <listheader label="ID" width="70px"/>
-                    <listheader label="Codigo E-MEC" width="110px"/>
-                    <listheader label="Nome" width="260px"/>
-                    <listheader label="Nivel" width="160px"/>
-                    <listheader label="Formato" width="140px"/>
-                    <listheader label="Acoes" width="300px"/>
-                </listhead>
-            </listbox>
+            <div children="@load(vm.lstCursos)"/>
 
             <hbox spacing="8px" sclass="top-actions">
-                <button id="btnPaginaAnteriorCurso" label="Pagina Anterior" sclass="btn-outline"/>
-                <label id="lblPaginacaoListCurso"/>
-                <button id="btnPaginaProximaCurso" label="Proxima Pagina" sclass="btn-outline"/>
+                <button label="Pagina Anterior" sclass="btn-outline"
+                        disabled="@load(vm.anteriorDisabled)" onClick="@command('paginaAnterior')"/>
+                <label value="@load(vm.paginacaoLabel)"/>
+                <button label="Proxima Pagina"  sclass="btn-outline"
+                        disabled="@load(vm.proximaDisabled)"  onClick="@command('proximaPagina')"/>
             </hbox>
         </vbox>
     </window>
 </zk>
-

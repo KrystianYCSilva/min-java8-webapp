@@ -2,14 +2,16 @@
 <zk>
     <style src="/css/pdf-like.css"/>
 
-    <window id="winDocenteForm" apply="br.gov.inep.censo.web.zk.modulo.DocenteComposer"
+    <window id="winDocenteForm"
+            apply="org.zkoss.bind.BindComposer"
+            viewModel="@id('vm') @init('br.gov.inep.censo.web.zk.modulo.DocenteViewModel')"
             border="normal" width="100%" sclass="sheet" position="center,top"
             vflex="1">
         <vbox spacing="10px" width="100%">
             <label value="Docente" sclass="official-tag"/>
-            <label id="lblTituloFormDocente" style="font-size:22px;font-weight:bold;"/>
+            <label value="@load(vm.tituloForm)" style="font-size:22px;font-weight:bold;"/>
 
-            <label id="lblErroFormDocente" sclass="alert" visible="false"/>
+            <label sclass="alert" value="@load(vm.erroForm)" visible="@load(vm.erroFormVisivel)"/>
 
             <grid width="100%">
                 <columns>
@@ -17,28 +19,52 @@
                     <column width="66%"/>
                 </columns>
                 <rows>
-                    <row><label value="ID do Docente na IES"/><textbox id="txtIdDocenteIes" width="240px"/></row>
-                    <row><label value="Nome"/><textbox id="txtNomeDocente" width="420px"/></row>
-                    <row><label value="CPF"/><textbox id="txtCpfDocente" width="240px"/></row>
-                    <row><label value="Documento estrangeiro"/><textbox id="txtDocumentoEstrangeiroDocente" width="240px"/></row>
-                    <row><label value="Data de nascimento"/><datebox id="dtNascimentoDocente" format="yyyy-MM-dd" width="240px"/></row>
-                    <row><label value="Cor/Raca"/><combobox id="cmbCorRacaDocente" readonly="true" width="320px"/></row>
-                    <row><label value="Nacionalidade"/><combobox id="cmbNacionalidadeDocente" readonly="true" width="320px"/></row>
-                    <row><label value="Pais de origem"/><combobox id="cmbPaisOrigemDocente" readonly="true" width="360px"/></row>
-                    <row><label value="UF de nascimento"/><combobox id="cmbUfNascimentoDocente" readonly="true" width="280px"/></row>
-                    <row><label value="Municipio de nascimento (codigo)"/><textbox id="txtMunicipioNascimentoDocente" width="220px"/></row>
-                    <row><label value="Docente com deficiencia / TEA / altas habilidades"/><combobox id="cmbDeficienciaDocente" readonly="true" width="320px"/></row>
+                    <row><label value="ID do Docente na IES"/>         <textbox value="@bind(vm.idDocenteIes)" width="240px"/></row>
+                    <row><label value="Nome"/>                         <textbox value="@bind(vm.nomeDocente)" width="420px"/></row>
+                    <row><label value="CPF"/>                          <textbox value="@bind(vm.cpfDocente)" width="240px"/></row>
+                    <row><label value="Documento estrangeiro"/>        <textbox value="@bind(vm.documentoEstrangeiro)" width="240px"/></row>
+                    <row><label value="Data de nascimento"/>           <datebox value="@bind(vm.dataNascimento)" format="yyyy-MM-dd" width="240px"/></row>
+                    <row>
+                        <label value="Cor/Raca"/>
+                        <combobox value="@bind(vm.corRacaSelecionada)" model="@load(vm.itensCorRaca)" readonly="true" width="320px">
+                            <template name="model"><comboitem label="@load(each.label)" value="@load(each.value)"/></template>
+                        </combobox>
+                    </row>
+                    <row>
+                        <label value="Nacionalidade"/>
+                        <combobox value="@bind(vm.nacionalidadeSelecionada)" model="@load(vm.itensNacionalidade)" readonly="true" width="320px">
+                            <template name="model"><comboitem label="@load(each.label)" value="@load(each.value)"/></template>
+                        </combobox>
+                    </row>
+                    <row>
+                        <label value="Pais de origem"/>
+                        <combobox value="@bind(vm.paisOrigemSelecionado)" model="@load(vm.itensPaisOrigem)" readonly="true" width="360px">
+                            <template name="model"><comboitem label="@load(each.label)" value="@load(each.value)"/></template>
+                        </combobox>
+                    </row>
+                    <row>
+                        <label value="UF de nascimento"/>
+                        <combobox value="@bind(vm.ufNascimentoSelecionado)" model="@load(vm.itensUfNascimento)" readonly="true" width="280px">
+                            <template name="model"><comboitem label="@load(each.label)" value="@load(each.value)"/></template>
+                        </combobox>
+                    </row>
+                    <row><label value="Municipio de nascimento (codigo)"/>  <textbox value="@bind(vm.municipioNascimento)" width="220px"/></row>
+                    <row>
+                        <label value="Docente com deficiencia / TEA / altas habilidades"/>
+                        <combobox value="@bind(vm.deficienciaSelecionada)" model="@load(vm.itensDeficiencia)" readonly="true" width="320px">
+                            <template name="model"><comboitem label="@load(each.label)" value="@load(each.value)"/></template>
+                        </combobox>
+                    </row>
                 </rows>
             </grid>
 
             <label value="Campos complementares do Leiaute" style="font-weight:bold;"/>
-            <vbox id="boxCamposComplementaresDocente" spacing="6px"/>
+            <div children="@load(vm.boxCamposComplementares)"/>
 
             <hbox spacing="8px" sclass="top-actions">
-                <button id="btnSalvarFormDocente" label="Salvar" sclass="btn"/>
-                <button id="btnVoltarFormDocente" label="Voltar para Listagem" sclass="btn-outline"/>
+                <button label="Salvar"               sclass="btn"         onClick="@command('salvar')"/>
+                <button label="Voltar para Listagem" sclass="btn-outline"  onClick="@command('voltar')"/>
             </hbox>
         </vbox>
     </window>
 </zk>
-

@@ -2,21 +2,23 @@
 <zk>
     <style src="/css/pdf-like.css"/>
 
-    <window id="winHome" apply="br.gov.inep.censo.web.zk.home.HomeComposer"
+    <window id="winHome"
+            apply="org.zkoss.bind.BindComposer"
+            viewModel="@id('vm') @init('br.gov.inep.censo.web.zk.home.HomeViewModel')"
             border="normal" width="900px" sclass="sheet" position="center,top"
             hflex="min" vflex="min">
         <vbox spacing="10px" width="100%">
             <label value="Documento Oficial" sclass="official-tag"/>
             <label value="Censo da Educacao Superior 2025" style="font-size:28px;font-weight:bold;"/>
-            <label value="Versao 2.0.0 - Frontend ZK 8.6 em padrao MVC"/>
+            <label value="Versao 2.0.0 - Frontend ZK 8.6 em padrao MVVM"/>
 
-            <label id="lblFlash" sclass="ok" visible="false"/>
+            <label sclass="ok" value="@load(vm.flashMsg)" visible="@load(vm.flashVisivel)"/>
 
             <label value="Este ambiente simula os modulos de coleta para Aluno, Curso, CursoAluno, Docente e IES, preservando regras de negocio na camada de servicos/JPA."/>
 
             <hbox spacing="10px" sclass="top-actions">
-                <button id="btnEntrar" label="Entrar no Sistema" sclass="btn"/>
-                <button id="btnMenu" label="Ir para Menu (requer login)" sclass="btn-outline"/>
+                <button label="Entrar no Sistema"         sclass="btn"         onClick="@command('entrar')"/>
+                <button label="Ir para Menu (requer login)" sclass="btn-outline" onClick="@command('irMenu')"/>
             </hbox>
 
             <label value="Stack: Tomcat 8+, Java 8, Servlet 3.1, Hibernate/JPA e ZK 8.6 com tema IceBlue Compact." sclass="footer-note"/>

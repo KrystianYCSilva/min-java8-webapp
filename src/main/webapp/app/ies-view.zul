@@ -2,7 +2,9 @@
 <zk>
     <style src="/css/pdf-like.css"/>
 
-    <window id="winIesView" apply="br.gov.inep.censo.web.zk.modulo.IesComposer"
+    <window id="winIesView"
+            apply="org.zkoss.bind.BindComposer"
+            viewModel="@id('vm') @init('br.gov.inep.censo.web.zk.modulo.IesViewModel')"
             border="normal" width="100%" sclass="sheet" position="center,top"
             vflex="1">
         <vbox spacing="10px" width="100%">
@@ -10,8 +12,8 @@
             <label value="Visualizar IES" style="font-size:22px;font-weight:bold;"/>
 
             <hbox spacing="8px" sclass="top-actions">
-                <button id="btnVoltarViewIes" label="Voltar para Listagem" sclass="btn-outline"/>
-                <button id="btnEditarViewIes" label="Alterar" sclass="btn-outline"/>
+                <button label="Voltar para Listagem" sclass="btn-outline" onClick="@command('voltarView')"/>
+                <button label="Alterar"              sclass="btn-outline" onClick="@command('editarView')"/>
             </hbox>
 
             <grid width="100%">
@@ -20,28 +22,22 @@
                     <column width="62%"/>
                 </columns>
                 <rows>
-                    <row><label value="ID"/><label id="lblViewIesId"/></row>
-                    <row><label value="ID IES INEP"/><label id="lblViewIesIdInep"/></row>
-                    <row><label value="Nome laboratorio"/><label id="lblViewIesNomeLaboratorio"/></row>
-                    <row><label value="Registro laboratorio IES"/><label id="lblViewIesRegistro"/></row>
-                    <row><label value="Laboratorio ativo"/><label id="lblViewIesAtivo"/></row>
-                    <row><label value="Descricao atividades"/><label id="lblViewIesDescricao"/></row>
-                    <row><label value="Palavras-chave"/><label id="lblViewIesPalavras"/></row>
-                    <row><label value="Laboratorio de informatica"/><label id="lblViewIesLabInfo"/></row>
-                    <row><label value="Tipo de laboratorio"/><label id="lblViewIesTipo"/></row>
-                    <row><label value="UF laboratorio"/><label id="lblViewIesUf"/></row>
-                    <row><label value="Municipio laboratorio"/><label id="lblViewIesMunicipio"/></row>
+                    <row><label value="ID"/>                         <label value="@load(vm.viewId)"/></row>
+                    <row><label value="ID IES INEP"/>                <label value="@load(vm.viewIdInep)"/></row>
+                    <row><label value="Nome laboratorio"/>           <label value="@load(vm.viewNomeLaboratorio)"/></row>
+                    <row><label value="Registro laboratorio IES"/>   <label value="@load(vm.viewRegistro)"/></row>
+                    <row><label value="Laboratorio ativo"/>          <label value="@load(vm.viewAtivo)"/></row>
+                    <row><label value="Descricao atividades"/>       <label value="@load(vm.viewDescricao)"/></row>
+                    <row><label value="Palavras-chave"/>             <label value="@load(vm.viewPalavras)"/></row>
+                    <row><label value="Laboratorio de informatica"/> <label value="@load(vm.viewLabInfo)"/></row>
+                    <row><label value="Tipo de laboratorio"/>        <label value="@load(vm.viewTipo)"/></row>
+                    <row><label value="UF laboratorio"/>             <label value="@load(vm.viewUf)"/></row>
+                    <row><label value="Municipio laboratorio"/>      <label value="@load(vm.viewMunicipio)"/></row>
                 </rows>
             </grid>
 
             <label value="Campos complementares do leiaute" style="font-weight:bold;"/>
-            <listbox id="lstViewCamposIes" width="100%">
-                <listhead>
-                    <listheader label="Campo" width="55%"/>
-                    <listheader label="Valor" width="45%"/>
-                </listhead>
-            </listbox>
+            <div children="@load(vm.lstViewCampos)"/>
         </vbox>
     </window>
 </zk>
-

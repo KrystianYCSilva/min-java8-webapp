@@ -9,7 +9,7 @@ Este arquivo acompanha a evolucao real da migracao. Atualizar a cada merge de br
 | 1 | `main` | Java 8 com comportamento preservado | Concluida | 2026-02-11 |
 | 2 | `feature/zk8-bootstrap-ui` | ZK 8.6.0.1 + Bootstrap + frontend | Concluida | 2026-02-20 |
 | 3 | `feature/springboot-modernization` | Spring Boot + Data + Security + MVC | Concluida | 2026-02-20 |
-| 4 | `feature/zk-mvvm-final` | Migracao final MVC -> MVVM | Planejada | - |
+| 4 | `feature/zk-mvvm-final` | Migracao final MVC -> MVVM | Concluida | 2026-02-20 |
 
 ## Fase 1 - `main`
 
@@ -200,15 +200,73 @@ Testes de integracao reativados (removido `@Ignore`):
 ## Fase 4 - `feature/zk-mvvm-final`
 
 ### Escopo
-1. Migracao final MVC -> MVVM.
-2. Consolidacao de padrao de ViewModel/Binder.
+1. Migracao final MVC -> MVVM: substituicao de todos os Composers por ViewModels ZK 8.
+2. Adocao do padrao `BindComposer` + `@Init`, `@Command`, `@NotifyChange`.
+3. Upgrade `zk.version` de `8.6.0.1` para `8.6.0.2` e adicao do artefato `zkbind`.
+4. Eliminacao de todos os Composers (`SelectorComposer`) — nenhuma referencia de Composer permanece.
 
 ### Mudancas realizadas
-1. Em aberto.
+
+#### pom.xml
+- `zk.version` atualizado de `8.6.0.1` para `8.6.0.2`.
+- Dependencia `org.zkoss.zk:zkbind:8.6.0.2` adicionada (exigida pelo mecanismo de data-binding MVVM).
+
+#### ViewModels criados em `br.gov.inep.censo.web.zk`
+
+| Classe | Substitui | ZULs cobertos |
+|---|---|---|
+| `AbstractBaseViewModel` | `AbstractBaseComposer` | Base para todos os ViewModels |
+| `auth/LoginViewModel` | `LoginComposer` | `login.zul` |
+| `home/HomeViewModel` | `HomeComposer` | `home.zul` |
+| `home/DashboardViewModel` | `DashboardComposer` | `home-content.zul` |
+| `menu/MenuViewModel` | `MenuComposer` | `menu.zul` |
+| `modulo/AlunoViewModel` | `AlunoComposer` | `aluno-list.zul`, `aluno-form.zul`, `aluno-view.zul` |
+| `modulo/CursoViewModel` | `CursoComposer` | `curso-list.zul`, `curso-form.zul`, `curso-view.zul` |
+| `modulo/CursoAlunoViewModel` | `CursoAlunoComposer` | `curso-aluno-list.zul`, `curso-aluno-form.zul` |
+| `modulo/DocenteViewModel` | `DocenteComposer` | `docente-list.zul`, `docente-form.zul`, `docente-view.zul` |
+| `modulo/IesViewModel` | `IesComposer` | `ies-list.zul`, `ies-form.zul`, `ies-view.zul` |
+
+Padrao adotado em todos os ViewModels:
+- `@Init` para inicializacao de estado; detecta ZUL atual via `Executions.getCurrent().getDesktop().getExecution().getServletPath()` em modulos com UI dinamica (campos de catalogo gerados programaticamente).
+- `@Command` + `@NotifyChange` para acoes (salvar, excluir, navegar, buscar).
+- Injecao de services via `SpringUtil.getBean("beanName")` (compativel com ZK 8 CE + Spring 4).
+- Campos dinamicos (checkboxes/textboxes do catalogo) construidos em `@Init` com `Executions.getCurrent()` — padrao correto MVVM para ZK 8.
+
+#### ZULs migrados para MVVM (19 no total)
+
+| ZUL | Mudanca |
+|---|---|
+| `login.zul` | `apply="BindComposer"`, `viewModel="@id('vm') @init('...LoginViewModel')"` |
+| `home.zul` | Idem com `HomeViewModel` |
+| `app/home-content.zul` | Idem com `DashboardViewModel` |
+| `app/menu.zul` | Idem com `MenuViewModel` |
+| `app/aluno-list.zul` | Idem com `AlunoViewModel` |
+| `app/aluno-form.zul` | Idem com `AlunoViewModel` |
+| `app/aluno-view.zul` | Idem com `AlunoViewModel` |
+| `app/curso-list.zul` | Idem com `CursoViewModel` |
+| `app/curso-form.zul` | Idem com `CursoViewModel` |
+| `app/curso-view.zul` | Idem com `CursoViewModel` |
+| `app/curso-aluno-list.zul` | Idem com `CursoAlunoViewModel` |
+| `app/curso-aluno-form.zul` | Idem com `CursoAlunoViewModel` |
+| `app/docente-list.zul` | Idem com `DocenteViewModel` |
+| `app/docente-form.zul` | Idem com `DocenteViewModel` |
+| `app/docente-view.zul` | Idem com `DocenteViewModel` |
+| `app/ies-list.zul` | Idem com `IesViewModel` |
+| `app/ies-form.zul` | Idem com `IesViewModel` |
+| `app/ies-view.zul` | Idem com `IesViewModel` |
+
+Todos os ZULs utilizam `@bind` para campos de formulario, `@load` para dados read-only e listas,
+`@command` para acoes de botao, e `<template name="model">` para comboboxes.
 
 ### Evidencias
-1. Em aberto.
+- `mvn clean test` em 2026-02-21: **BUILD SUCCESS**.
+- Resultado: `Tests run: 59, Failures: 0, Errors: 0, Skipped: 0`.
+- JaCoCo check `util/*`: cobertura de linhas >= 30% (threshold atendido).
+- Zero referencias a `SelectorComposer`, `GenericForwardComposer` ou `AbstractBaseComposer` no codigo de producao.
+- Todos os 10 ViewModels compilam sem erros; nenhuma regressao de API de servico ou repositorio.
 
 ### Pendencias
-1. Em aberto.
+- Elevar threshold JaCoCo para `service/*` e `repository/*` (postergado para manutencao continua).
+- Considerar remocao dos XMLs legados (`applicationContext.xml`, `security-context.xml`, `mvc-context.xml`) em refatoracao futura.
+- Testes de integracao end-to-end para os ViewModels (requerem ZK Test Framework ou Selenium).
 

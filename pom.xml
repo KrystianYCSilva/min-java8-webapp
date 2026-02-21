@@ -17,7 +17,7 @@
         <maven.compiler.plugin.version>2.5.1</maven.compiler.plugin.version>
         <maven.war.plugin.version>3.3.2</maven.war.plugin.version>
         <hibernate.version>4.2.21.Final</hibernate.version>
-        <zk.version>8.6.0.1</zk.version>
+        <zk.version>8.6.0.2</zk.version>
         <spring.version>4.3.30.RELEASE</spring.version>
         <spring.security.version>4.2.13.RELEASE</spring.security.version>
         <spring.data.jpa.version>1.11.23.RELEASE</spring.data.jpa.version>
@@ -57,10 +57,17 @@
             <artifactId>zkplus</artifactId>
             <version>${zk.version}</version>
         </dependency>
+
         <!-- ZK Bootstrap Theme -->
         <dependency>
             <groupId>org.zkoss.theme</groupId>
             <artifactId>iceblue_c</artifactId>
+            <version>${zk.version}</version>
+        </dependency>
+        <!-- ZK MVVM Bind -->
+        <dependency>
+            <groupId>org.zkoss.zk</groupId>
+            <artifactId>zkbind</artifactId>
             <version>${zk.version}</version>
         </dependency>
         <dependency>

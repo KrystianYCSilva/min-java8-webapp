@@ -2,14 +2,16 @@
 <zk>
     <style src="/css/pdf-like.css"/>
 
-    <window id="winCursoForm" apply="br.gov.inep.censo.web.zk.modulo.CursoComposer"
+    <window id="winCursoForm"
+            apply="org.zkoss.bind.BindComposer"
+            viewModel="@id('vm') @init('br.gov.inep.censo.web.zk.modulo.CursoViewModel')"
             border="normal" width="100%" sclass="sheet" position="center,top"
             vflex="1">
         <vbox spacing="10px" width="100%">
             <label value="Curso" sclass="official-tag"/>
-            <label id="lblTituloFormCurso" style="font-size:22px;font-weight:bold;"/>
+            <label value="@load(vm.tituloForm)" style="font-size:22px;font-weight:bold;"/>
 
-            <label id="lblErroFormCurso" sclass="alert" visible="false"/>
+            <label sclass="alert" value="@load(vm.erroForm)" visible="@load(vm.erroFormVisivel)"/>
 
             <grid width="100%">
                 <columns>
@@ -19,38 +21,43 @@
                 <rows>
                     <row>
                         <label value="Codigo do Curso no E-MEC"/>
-                        <textbox id="txtCodigoCursoEmec" width="220px"/>
+                        <textbox value="@bind(vm.codigoCursoEmec)" width="220px"/>
                     </row>
                     <row>
                         <label value="Nome do Curso"/>
-                        <textbox id="txtNomeCurso" width="420px"/>
+                        <textbox value="@bind(vm.nomeCurso)" width="420px"/>
                     </row>
                     <row>
                         <label value="Nivel Academico"/>
-                        <combobox id="cmbNivelAcademicoCurso" readonly="true" width="320px"/>
+                        <combobox value="@bind(vm.nivelAcademicoSelecionado)" model="@load(vm.itensNivelAcademico)" readonly="true" width="320px">
+                            <template name="model"><comboitem label="@load(each.label)" value="@load(each.value)"/></template>
+                        </combobox>
                     </row>
                     <row>
                         <label value="Formato de Oferta"/>
-                        <combobox id="cmbFormatoOfertaCurso" readonly="true" width="320px"/>
+                        <combobox value="@bind(vm.formatoOfertaSelecionado)" model="@load(vm.itensFormatoOferta)" readonly="true" width="320px">
+                            <template name="model"><comboitem label="@load(each.label)" value="@load(each.value)"/></template>
+                        </combobox>
                     </row>
                     <row>
                         <label value="Curso teve aluno vinculado no ano do Censo?"/>
-                        <combobox id="cmbTeveAlunoVinculadoCurso" readonly="true" width="220px"/>
+                        <combobox value="@bind(vm.teveAlunoVinculadoSelecionado)" model="@load(vm.itensTeveAlunoVinculado)" readonly="true" width="220px">
+                            <template name="model"><comboitem label="@load(each.label)" value="@load(each.value)"/></template>
+                        </combobox>
                     </row>
                 </rows>
             </grid>
 
             <label value="Recursos de Tecnologia Assistiva (1..N)" style="font-weight:bold;"/>
-            <vbox id="boxRecursosCurso" spacing="6px"/>
+            <div children="@load(vm.boxRecursos)"/>
 
             <label value="Campos complementares do Leiaute" style="font-weight:bold;"/>
-            <vbox id="boxCamposComplementaresCurso" spacing="6px"/>
+            <div children="@load(vm.boxCamposComplementares)"/>
 
             <hbox spacing="8px" sclass="top-actions">
-                <button id="btnSalvarFormCurso" label="Salvar" sclass="btn"/>
-                <button id="btnVoltarFormCurso" label="Voltar para Listagem" sclass="btn-outline"/>
+                <button label="Salvar"               sclass="btn"         onClick="@command('salvar')"/>
+                <button label="Voltar para Listagem" sclass="btn-outline"  onClick="@command('voltar')"/>
             </hbox>
         </vbox>
     </window>
 </zk>
-

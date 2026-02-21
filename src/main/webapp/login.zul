@@ -2,7 +2,9 @@
 <zk>
     <style src="/css/pdf-like.css"/>
 
-    <window id="winLogin" apply="br.gov.inep.censo.web.zk.auth.LoginComposer"
+    <window id="winLogin"
+            apply="org.zkoss.bind.BindComposer"
+            viewModel="@id('vm') @init('br.gov.inep.censo.web.zk.auth.LoginViewModel')"
             border="normal" width="560px" sclass="sheet" position="center,top"
             hflex="min" vflex="min">
         <vbox spacing="10px" width="100%">
@@ -10,25 +12,25 @@
             <label value="Autenticacao do Usuario" style="font-size:22px;font-weight:bold;"/>
             <label value="Use as credenciais cadastradas na tabela usuario."/>
 
-            <label id="lblErro" sclass="alert" visible="false"/>
-            <label id="lblInfo" sclass="ok" visible="false"/>
+            <label sclass="alert" value="@load(vm.msgErro)" visible="@load(vm.erroVisivel)"/>
+            <label sclass="ok"    value="@load(vm.msgInfo)" visible="@load(vm.infoVisivel)"/>
 
             <grid width="100%">
                 <rows>
                     <row>
                         <label value="Login"/>
-                        <textbox id="txtLogin" maxlength="50" width="100%"/>
+                        <textbox value="@bind(vm.login)" maxlength="50" width="100%"/>
                     </row>
                     <row>
                         <label value="Senha"/>
-                        <textbox id="txtSenha" type="password" maxlength="100" width="100%"/>
+                        <textbox value="@bind(vm.senha)" type="password" maxlength="100" width="100%"/>
                     </row>
                 </rows>
             </grid>
 
             <hbox spacing="10px" sclass="top-actions">
-                <button id="btnEntrar" label="Entrar" sclass="btn"/>
-                <button id="btnVoltar" label="Voltar" sclass="btn-outline"/>
+                <button label="Entrar"  sclass="btn"         onClick="@command('entrar')" />
+                <button label="Voltar"  sclass="btn-outline" onClick="@command('voltar')" />
             </hbox>
 
             <label value="Credencial inicial: admin / admin123." sclass="footer-note"/>

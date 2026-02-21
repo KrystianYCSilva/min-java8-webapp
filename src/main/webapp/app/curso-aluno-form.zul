@@ -2,7 +2,9 @@
 <zk>
     <style src="/css/pdf-like.css"/>
 
-    <window id="winCursoAlunoForm" apply="br.gov.inep.censo.web.zk.modulo.CursoAlunoComposer"
+    <window id="winCursoAlunoForm"
+            apply="org.zkoss.bind.BindComposer"
+            viewModel="@id('vm') @init('br.gov.inep.censo.web.zk.modulo.CursoAlunoViewModel')"
             border="normal" width="100%" sclass="sheet" position="center,top"
             vflex="1">
         <vbox spacing="10px" width="100%">
@@ -10,7 +12,7 @@
             <label value="Formulario de Vinculo Aluno x Curso (Registro 42)" style="font-size:22px;font-weight:bold;"/>
             <label value="Normalizacao 1..N para financiamentos, apoio social, atividades e reservas de vagas + campos complementares."/>
 
-            <label id="lblErroFormCursoAluno" sclass="alert" visible="false"/>
+            <label sclass="alert" value="@load(vm.erroForm)" visible="@load(vm.erroFormVisivel)"/>
 
             <grid width="100%">
                 <columns>
@@ -18,19 +20,54 @@
                     <column width="62%"/>
                 </columns>
                 <rows>
-                    <row><label value="Aluno"/><combobox id="cmbAlunoCursoAluno" readonly="true" width="520px"/></row>
-                    <row><label value="Curso"/><combobox id="cmbCursoCursoAluno" readonly="true" width="520px"/></row>
-                    <row><label value="ID na IES - Identificacao unica"/><textbox id="txtIdAlunoIesCursoAluno" width="240px"/></row>
-                    <row><label value="Periodo de referencia (AAAA)"/><textbox id="txtPeriodoRefCursoAluno" width="120px"/></row>
-                    <row><label value="Codigo do polo do curso a distancia"/><textbox id="txtCodigoPoloCursoAluno" width="180px"/></row>
-                    <row><label value="Turno do aluno"/><combobox id="cmbTurnoCursoAluno" readonly="true" width="260px"/></row>
-                    <row><label value="Situacao de vinculo do aluno ao curso"/><combobox id="cmbSituacaoCursoAluno" readonly="true" width="260px"/></row>
-                    <row><label value="Curso origem"/><textbox id="txtCursoOrigemCursoAluno" width="180px"/></row>
-                    <row><label value="Semestre de conclusao (01AAAA / 02AAAA)"/><textbox id="txtSemestreConclusaoCursoAluno" width="180px"/></row>
-                    <row><label value="Aluno PARFOR"/><combobox id="cmbAlunoParforCursoAluno" readonly="true" width="180px"/></row>
-                    <row><label value="Segunda Licenciatura / Formacao pedagogica"/><combobox id="cmbSegundaLicCursoAluno" readonly="true" width="180px"/></row>
-                    <row><label value="Tipo - Segunda Licenciatura / Formacao pedagogica"/><combobox id="cmbTipoSegundaLicCursoAluno" readonly="true" width="320px"/></row>
-                    <row><label value="Semestre de ingresso no curso (01AAAA / 02AAAA)"/><textbox id="txtSemestreIngressoCursoAluno" width="180px"/></row>
+                    <row>
+                        <label value="Aluno"/>
+                        <combobox value="@bind(vm.alunIdSelecionado)" model="@load(vm.itensAluno)" readonly="true" width="520px">
+                            <template name="model"><comboitem label="@load(each.label)" value="@load(each.value)"/></template>
+                        </combobox>
+                    </row>
+                    <row>
+                        <label value="Curso"/>
+                        <combobox value="@bind(vm.cursoIdSelecionado)" model="@load(vm.itensCurso)" readonly="true" width="520px">
+                            <template name="model"><comboitem label="@load(each.label)" value="@load(each.value)"/></template>
+                        </combobox>
+                    </row>
+                    <row><label value="ID na IES - Identificacao unica"/>              <textbox value="@bind(vm.idAlunoIes)" width="240px"/></row>
+                    <row><label value="Periodo de referencia (AAAA)"/>                 <textbox value="@bind(vm.periodoReferencia)" width="120px"/></row>
+                    <row><label value="Codigo do polo do curso a distancia"/>          <textbox value="@bind(vm.codigoPolo)" width="180px"/></row>
+                    <row>
+                        <label value="Turno do aluno"/>
+                        <combobox value="@bind(vm.turnoSelecionado)" model="@load(vm.itensTurno)" readonly="true" width="260px">
+                            <template name="model"><comboitem label="@load(each.label)" value="@load(each.value)"/></template>
+                        </combobox>
+                    </row>
+                    <row>
+                        <label value="Situacao de vinculo do aluno ao curso"/>
+                        <combobox value="@bind(vm.situacaoSelecionada)" model="@load(vm.itensSituacao)" readonly="true" width="260px">
+                            <template name="model"><comboitem label="@load(each.label)" value="@load(each.value)"/></template>
+                        </combobox>
+                    </row>
+                    <row><label value="Curso origem"/>                                 <textbox value="@bind(vm.cursoOrigem)" width="180px"/></row>
+                    <row><label value="Semestre de conclusao (01AAAA / 02AAAA)"/>      <textbox value="@bind(vm.semestreConclusao)" width="180px"/></row>
+                    <row>
+                        <label value="Aluno PARFOR"/>
+                        <combobox value="@bind(vm.alunoParforSelecionado)" model="@load(vm.itensSimNao)" readonly="true" width="180px">
+                            <template name="model"><comboitem label="@load(each.label)" value="@load(each.value)"/></template>
+                        </combobox>
+                    </row>
+                    <row>
+                        <label value="Segunda Licenciatura / Formacao pedagogica"/>
+                        <combobox value="@bind(vm.segundaLicSelecionada)" model="@load(vm.itensSimNao)" readonly="true" width="180px">
+                            <template name="model"><comboitem label="@load(each.label)" value="@load(each.value)"/></template>
+                        </combobox>
+                    </row>
+                    <row>
+                        <label value="Tipo - Segunda Licenciatura / Formacao pedagogica"/>
+                        <combobox value="@bind(vm.tipoSegundaLicSelecionado)" model="@load(vm.itensTipoSegundaLic)" readonly="true" width="320px">
+                            <template name="model"><comboitem label="@load(each.label)" value="@load(each.value)"/></template>
+                        </combobox>
+                    </row>
+                    <row><label value="Semestre de ingresso no curso (01AAAA / 02AAAA)"/><textbox value="@bind(vm.semestreIngresso)" width="180px"/></row>
                 </rows>
             </grid>
 
@@ -41,39 +78,88 @@
                     <column width="62%"/>
                 </columns>
                 <rows>
-                    <row><label value="Vestibular"/><combobox id="cmbFormaVestibularCursoAluno" readonly="true" width="180px"/></row>
-                    <row><label value="ENEM"/><combobox id="cmbFormaEnemCursoAluno" readonly="true" width="180px"/></row>
-                    <row><label value="Avaliacao seriada"/><combobox id="cmbFormaAvaliacaoSeriadaCursoAluno" readonly="true" width="180px"/></row>
-                    <row><label value="Selecao simplificada"/><combobox id="cmbFormaSelecaoSimplificadaCursoAluno" readonly="true" width="180px"/></row>
-                    <row><label value="Egresso bi/li"/><combobox id="cmbFormaEgressoBiLiCursoAluno" readonly="true" width="180px"/></row>
-                    <row><label value="PEC-G"/><combobox id="cmbFormaPecGCursoAluno" readonly="true" width="180px"/></row>
-                    <row><label value="Transferencia ex-officio"/><combobox id="cmbFormaTransfExOfficioCursoAluno" readonly="true" width="180px"/></row>
-                    <row><label value="Decisao judicial"/><combobox id="cmbFormaDecisaoJudicialCursoAluno" readonly="true" width="180px"/></row>
-                    <row><label value="Vagas remanescentes"/><combobox id="cmbFormaVagasRemanescentesCursoAluno" readonly="true" width="180px"/></row>
-                    <row><label value="Programas especiais"/><combobox id="cmbFormaProgramasEspeciaisCursoAluno" readonly="true" width="180px"/></row>
+                    <row>
+                        <label value="Vestibular"/>
+                        <combobox value="@bind(vm.formaVestibularSelecionado)" model="@load(vm.itensSimNao)" readonly="true" width="180px">
+                            <template name="model"><comboitem label="@load(each.label)" value="@load(each.value)"/></template>
+                        </combobox>
+                    </row>
+                    <row>
+                        <label value="ENEM"/>
+                        <combobox value="@bind(vm.formaEnemSelecionado)" model="@load(vm.itensSimNao)" readonly="true" width="180px">
+                            <template name="model"><comboitem label="@load(each.label)" value="@load(each.value)"/></template>
+                        </combobox>
+                    </row>
+                    <row>
+                        <label value="Avaliacao seriada"/>
+                        <combobox value="@bind(vm.formaAvaliacaoSeriadaSelecionado)" model="@load(vm.itensSimNao)" readonly="true" width="180px">
+                            <template name="model"><comboitem label="@load(each.label)" value="@load(each.value)"/></template>
+                        </combobox>
+                    </row>
+                    <row>
+                        <label value="Selecao simplificada"/>
+                        <combobox value="@bind(vm.formaSelecaoSimplificadaSelecionado)" model="@load(vm.itensSimNao)" readonly="true" width="180px">
+                            <template name="model"><comboitem label="@load(each.label)" value="@load(each.value)"/></template>
+                        </combobox>
+                    </row>
+                    <row>
+                        <label value="Egresso bi/li"/>
+                        <combobox value="@bind(vm.formaEgressoBiLiSelecionado)" model="@load(vm.itensSimNao)" readonly="true" width="180px">
+                            <template name="model"><comboitem label="@load(each.label)" value="@load(each.value)"/></template>
+                        </combobox>
+                    </row>
+                    <row>
+                        <label value="PEC-G"/>
+                        <combobox value="@bind(vm.formaPecGSelecionado)" model="@load(vm.itensSimNao)" readonly="true" width="180px">
+                            <template name="model"><comboitem label="@load(each.label)" value="@load(each.value)"/></template>
+                        </combobox>
+                    </row>
+                    <row>
+                        <label value="Transferencia ex-officio"/>
+                        <combobox value="@bind(vm.formaTransfExOffSelecionado)" model="@load(vm.itensSimNao)" readonly="true" width="180px">
+                            <template name="model"><comboitem label="@load(each.label)" value="@load(each.value)"/></template>
+                        </combobox>
+                    </row>
+                    <row>
+                        <label value="Decisao judicial"/>
+                        <combobox value="@bind(vm.formaDecisaoJudicialSelecionado)" model="@load(vm.itensSimNao)" readonly="true" width="180px">
+                            <template name="model"><comboitem label="@load(each.label)" value="@load(each.value)"/></template>
+                        </combobox>
+                    </row>
+                    <row>
+                        <label value="Vagas remanescentes"/>
+                        <combobox value="@bind(vm.formaVagasRemanescentesSelecionado)" model="@load(vm.itensSimNao)" readonly="true" width="180px">
+                            <template name="model"><comboitem label="@load(each.label)" value="@load(each.value)"/></template>
+                        </combobox>
+                    </row>
+                    <row>
+                        <label value="Programas especiais"/>
+                        <combobox value="@bind(vm.formaProgramasEspeciaisSelecionado)" model="@load(vm.itensSimNao)" readonly="true" width="180px">
+                            <template name="model"><comboitem label="@load(each.label)" value="@load(each.value)"/></template>
+                        </combobox>
+                    </row>
                 </rows>
             </grid>
 
             <label value="Financiamento (1..N)" style="font-weight:bold;"/>
-            <vbox id="boxFinanciamentoCursoAluno" spacing="6px"/>
+            <div children="@load(vm.boxFinanciamento)"/>
 
             <label value="Apoio Social (1..N)" style="font-weight:bold;"/>
-            <vbox id="boxApoioCursoAluno" spacing="6px"/>
+            <div children="@load(vm.boxApoio)"/>
 
             <label value="Atividades Extracurriculares (1..N)" style="font-weight:bold;"/>
-            <vbox id="boxAtividadeCursoAluno" spacing="6px"/>
+            <div children="@load(vm.boxAtividade)"/>
 
             <label value="Reserva de Vagas / Programas Diferenciados (1..N)" style="font-weight:bold;"/>
-            <vbox id="boxReservaCursoAluno" spacing="6px"/>
+            <div children="@load(vm.boxReserva)"/>
 
             <label value="Campos complementares do leiaute (Registro 42)" style="font-weight:bold;"/>
-            <vbox id="boxCamposComplementaresCursoAluno" spacing="6px"/>
+            <div children="@load(vm.boxCamposComplementares)"/>
 
             <hbox spacing="8px" sclass="top-actions">
-                <button id="btnSalvarFormCursoAluno" label="Salvar Registro 42" sclass="btn"/>
-                <button id="btnVoltarFormCursoAluno" label="Voltar para Listagem" sclass="btn-outline"/>
+                <button label="Salvar Registro 42"   sclass="btn"         onClick="@command('salvar')"/>
+                <button label="Voltar para Listagem" sclass="btn-outline"  onClick="@command('voltar')"/>
             </hbox>
         </vbox>
     </window>
 </zk>
-

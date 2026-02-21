@@ -2,7 +2,9 @@
 <zk>
     <style src="/css/pdf-like.css"/>
 
-    <window id="winCursoView" apply="br.gov.inep.censo.web.zk.modulo.CursoComposer"
+    <window id="winCursoView"
+            apply="org.zkoss.bind.BindComposer"
+            viewModel="@id('vm') @init('br.gov.inep.censo.web.zk.modulo.CursoViewModel')"
             border="normal" width="100%" sclass="sheet" position="center,top"
             vflex="1">
         <vbox spacing="10px" width="100%">
@@ -10,8 +12,8 @@
             <label value="Visualizar Curso" style="font-size:22px;font-weight:bold;"/>
 
             <hbox spacing="8px" sclass="top-actions">
-                <button id="btnVoltarViewCurso" label="Voltar para Listagem" sclass="btn-outline"/>
-                <button id="btnEditarViewCurso" label="Alterar" sclass="btn-outline"/>
+                <button label="Voltar para Listagem" sclass="btn-outline" onClick="@command('voltarView')"/>
+                <button label="Alterar"              sclass="btn-outline" onClick="@command('editarView')"/>
             </hbox>
 
             <grid width="100%">
@@ -20,24 +22,18 @@
                     <column width="70%"/>
                 </columns>
                 <rows>
-                    <row><label value="ID"/><label id="lblViewCursoId"/></row>
-                    <row><label value="Codigo E-MEC"/><label id="lblViewCursoCodigo"/></row>
-                    <row><label value="Nome"/><label id="lblViewCursoNome"/></row>
-                    <row><label value="Nivel Academico"/><label id="lblViewCursoNivel"/></row>
-                    <row><label value="Formato de Oferta"/><label id="lblViewCursoFormato"/></row>
-                    <row><label value="Teve aluno vinculado"/><label id="lblViewCursoVinculado"/></row>
-                    <row><label value="Recursos assistivos"/><label id="lblViewCursoRecursos"/></row>
+                    <row><label value="ID"/>                   <label value="@load(vm.viewId)"/></row>
+                    <row><label value="Codigo E-MEC"/>         <label value="@load(vm.viewCodigo)"/></row>
+                    <row><label value="Nome"/>                 <label value="@load(vm.viewNome)"/></row>
+                    <row><label value="Nivel Academico"/>      <label value="@load(vm.viewNivel)"/></row>
+                    <row><label value="Formato de Oferta"/>    <label value="@load(vm.viewFormato)"/></row>
+                    <row><label value="Teve aluno vinculado"/> <label value="@load(vm.viewVinculado)"/></row>
+                    <row><label value="Recursos assistivos"/>  <label value="@load(vm.viewRecursos)"/></row>
                 </rows>
             </grid>
 
             <label value="Campos complementares do leiaute" style="font-weight:bold;"/>
-            <listbox id="lstViewCamposCurso" width="100%">
-                <listhead>
-                    <listheader label="Campo" width="55%"/>
-                    <listheader label="Valor" width="45%"/>
-                </listhead>
-            </listbox>
+            <div children="@load(vm.lstViewCampos)"/>
         </vbox>
     </window>
 </zk>
-

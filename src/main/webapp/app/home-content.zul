@@ -1,13 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <zk>
-    <window id="winDashboard" apply="br.gov.inep.censo.web.zk.home.DashboardComposer"
+    <window id="winDashboard"
+            apply="org.zkoss.bind.BindComposer"
+            viewModel="@id('vm') @init('br.gov.inep.censo.web.zk.home.DashboardViewModel')"
             border="normal" width="100%" sclass="sheet" vflex="1">
         <vbox spacing="12px" width="100%">
             <label value="Home" sclass="official-tag"/>
             <label value="Painel Inicial" style="font-size:24px;font-weight:bold;"/>
-            <label id="lblResumoDashboard" style="color:#334e68;"/>
+            <label value="@load(vm.resumo)" style="color:#334e68;"/>
 
-            <label id="lblFlashDashboard" sclass="ok" visible="false"/>
+            <label sclass="ok" value="@load(vm.flashMsg)" visible="@load(vm.flashVisivel)"/>
 
             <separator bar="true"/>
 

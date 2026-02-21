@@ -2,7 +2,9 @@
 <zk>
     <style src="/css/app-shell.css"/>
 
-    <window id="winShell" apply="br.gov.inep.censo.web.zk.menu.MenuComposer"
+    <window id="winShell"
+            apply="org.zkoss.bind.BindComposer"
+            viewModel="@id('vm') @init('br.gov.inep.censo.web.zk.menu.MenuViewModel')"
             border="none" width="100%" height="100%" sclass="shell-root">
         <vbox width="100%" height="100%" spacing="0">
             <hbox sclass="shell-header" width="100%" widths="72%,28%" align="center">
@@ -13,45 +15,47 @@
 
                 <hbox sclass="shell-user-actions" width="100%" spacing="12px" pack="end" align="center">
                     <vbox spacing="1px" sclass="shell-userbox">
-                        <label id="lblUsuarioHeader" sclass="shell-user-name"/>
-                        <label id="lblUsuarioLogin" sclass="shell-user-login"/>
+                        <label value="@load(vm.nomeUsuario)"  sclass="shell-user-name"/>
+                        <label value="@load(vm.loginUsuario)" sclass="shell-user-login"/>
                     </vbox>
-                    <button id="btnSairHeader" label="Sair" sclass="shell-logout"/>
+                    <button label="Sair" sclass="shell-logout" onClick="@command('sair')"/>
                 </hbox>
             </hbox>
 
             <hbox sclass="shell-body" width="100%" spacing="0" valign="top">
                 <vbox sclass="shell-sidebar" width="260px" spacing="8px">
                     <label value="Navegacao" sclass="shell-nav-title"/>
-                    <label id="btnNavHome" value="Home" sclass="shell-nav-item"/>
-                    <label id="btnNavAluno" value="Modulo Aluno" sclass="shell-nav-item"/>
-                    <label id="btnNavCurso" value="Modulo Curso" sclass="shell-nav-item"/>
-                    <label id="btnNavCursoAluno" value="Registro 42 - CursoAluno" sclass="shell-nav-item"/>
-                    <label id="btnNavDocente" value="Modulo Docente" sclass="shell-nav-item"/>
-                    <label id="btnNavIes" value="Modulo IES" sclass="shell-nav-item"/>
+                    <label value="Home"                          sclass="@load(vm.navHomeClass())"       onClick="@command('irHome')"/>
+                    <label value="Modulo Aluno"                  sclass="@load(vm.navAlunoClass())"      onClick="@command('irAluno')"/>
+                    <label value="Modulo Curso"                  sclass="@load(vm.navCursoClass())"      onClick="@command('irCurso')"/>
+                    <label value="Registro 42 - CursoAluno"      sclass="@load(vm.navCursoAlunoClass())" onClick="@command('irCursoAluno')"/>
+                    <label value="Modulo Docente"                sclass="@load(vm.navDocenteClass())"    onClick="@command('irDocente')"/>
+                    <label value="Modulo IES"                    sclass="@load(vm.navIesClass())"        onClick="@command('irIes')"/>
                 </vbox>
 
                 <vbox sclass="shell-main" width="100%" spacing="0">
                     <vbox sclass="shell-content-wrap" width="100%">
-                        <include id="incMain" width="100%"/>
+                        <include src="@load(vm.mainSrc)" width="100%"/>
                     </vbox>
 
                     <hbox sclass="shell-footer" width="100%" align="center" pack="center">
-                        <label id="lblFooter"/>
+                        <label value="@load(vm.footerText)"/>
                     </hbox>
                 </vbox>
             </hbox>
         </vbox>
 
-        <window id="winSub" mode="overlapped" position="center" closable="true" sizable="true" visible="false"
+        <window id="winSub" mode="overlapped" position="center" closable="true" sizable="true"
+                visible="@load(vm.subVisible)"
                 width="95%" height="90%" border="normal" sclass="shell-subwindow" contentStyle="overflow:auto;"
-                title="Detalhes">
+                title="@load(vm.subTitle)"
+                onClose="@command('fecharSub')">
             <vbox width="100%" height="100%" spacing="6px">
                 <hbox pack="justify" align="center" sclass="shell-subheader">
-                    <label id="lblSubTitle" sclass="shell-subtitle-main"/>
+                    <label value="@load(vm.subTitle)" sclass="shell-subtitle-main"/>
                 </hbox>
                 <vbox sclass="shell-subcontent" width="100%">
-                    <include id="incSub" width="100%"/>
+                    <include src="@load(vm.subSrc)" width="100%"/>
                 </vbox>
             </vbox>
         </window>

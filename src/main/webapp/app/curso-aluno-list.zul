@@ -2,39 +2,24 @@
 <zk>
     <style src="/css/pdf-like.css"/>
 
-    <window id="winCursoAlunoList" apply="br.gov.inep.censo.web.zk.modulo.CursoAlunoComposer"
+    <window id="winCursoAlunoList"
+            apply="org.zkoss.bind.BindComposer"
+            viewModel="@id('vm') @init('br.gov.inep.censo.web.zk.modulo.CursoAlunoViewModel')"
             border="normal" width="100%" sclass="sheet" position="center,top"
             vflex="1">
         <vbox spacing="10px" width="100%">
             <label value="Modulo Vinculo" sclass="official-tag"/>
             <label value="Listagem de Vinculos Aluno x Curso (Registro 42)" style="font-size:22px;font-weight:bold;"/>
 
-            <label id="lblErroListCursoAluno" sclass="alert" visible="false"/>
-            <label id="lblFlashListCursoAluno" sclass="ok" visible="false"/>
+            <label sclass="alert" value="@load(vm.erroList)" visible="@load(vm.erroListVisivel)"/>
+            <label sclass="ok"    value="@load(vm.flashList)" visible="@load(vm.flashListVisivel)"/>
 
             <hbox spacing="8px" sclass="top-actions">
-                <button id="btnNovoListCursoAluno" label="Incluir via Formulario" sclass="btn"/>
-                <button id="btnMenuListCursoAluno" label="Menu" sclass="btn-outline"/>
+                <button label="Incluir via Formulario" sclass="btn"        onClick="@command('novo')"/>
+                <button label="Menu"                   sclass="btn-outline" onClick="@command('voltar')"/>
             </hbox>
 
-            <listbox id="lstCursoAluno" width="100%">
-                <listhead sizable="true">
-                    <listheader label="ID" width="60px"/>
-                    <listheader label="Periodo" width="80px"/>
-                    <listheader label="Aluno" width="180px"/>
-                    <listheader label="ID Aluno IES" width="110px"/>
-                    <listheader label="Curso" width="170px"/>
-                    <listheader label="Codigo Curso E-MEC" width="120px"/>
-                    <listheader label="Turno" width="60px"/>
-                    <listheader label="Situacao" width="70px"/>
-                    <listheader label="Semestre Ingresso" width="120px"/>
-                    <listheader label="Financiamentos" width="130px"/>
-                    <listheader label="Apoio Social" width="120px"/>
-                    <listheader label="Atividades" width="120px"/>
-                    <listheader label="Reservas" width="120px"/>
-                </listhead>
-            </listbox>
+            <div children="@load(vm.lstCursoAluno)"/>
         </vbox>
     </window>
 </zk>
-

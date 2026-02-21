@@ -2,14 +2,16 @@
 <zk>
     <style src="/css/pdf-like.css"/>
 
-    <window id="winAlunoForm" apply="br.gov.inep.censo.web.zk.modulo.AlunoComposer"
+    <window id="winAlunoForm"
+            apply="org.zkoss.bind.BindComposer"
+            viewModel="@id('vm') @init('br.gov.inep.censo.web.zk.modulo.AlunoViewModel')"
             border="normal" width="100%" sclass="sheet" position="center,top"
             vflex="1">
         <vbox spacing="10px" width="100%">
             <label value="Aluno" sclass="official-tag"/>
-            <label id="lblTituloFormAluno" style="font-size:22px;font-weight:bold;"/>
+            <label value="@load(vm.tituloForm)" style="font-size:22px;font-weight:bold;"/>
 
-            <label id="lblErroFormAluno" sclass="alert" visible="false"/>
+            <label sclass="alert" value="@load(vm.erroForm)" visible="@load(vm.erroFormVisivel)"/>
 
             <grid width="100%">
                 <columns>
@@ -19,54 +21,57 @@
                 <rows>
                     <row>
                         <label value="ID do Aluno no INEP"/>
-                        <textbox id="txtIdAlunoInep" width="220px"/>
+                        <textbox value="@bind(vm.idAlunoInep)" width="220px"/>
                     </row>
                     <row>
                         <label value="Nome"/>
-                        <textbox id="txtNomeAluno" width="420px"/>
+                        <textbox value="@bind(vm.nomeAluno)" width="420px"/>
                     </row>
                     <row>
                         <label value="CPF"/>
-                        <textbox id="txtCpfAluno" width="220px"/>
+                        <textbox value="@bind(vm.cpfAluno)" width="220px"/>
                     </row>
                     <row>
                         <label value="Data de nascimento"/>
-                        <datebox id="dtNascimentoAluno" format="yyyy-MM-dd" width="220px"/>
+                        <datebox value="@bind(vm.dataNascimento)" format="yyyy-MM-dd" width="220px"/>
                     </row>
                     <row>
                         <label value="Cor/Raca"/>
-                        <combobox id="cmbCorRacaAluno" readonly="true" width="320px"/>
+                        <combobox value="@bind(vm.corRacaSelecionada)" readonly="true" width="320px">
+                            <template name="model"><comboitem label="@load(each.label)" value="@load(each.value)"/></template>
+                        </combobox>
                     </row>
                     <row>
                         <label value="Nacionalidade"/>
-                        <combobox id="cmbNacionalidadeAluno" readonly="true" width="320px"/>
+                        <combobox value="@bind(vm.nacionalidadeSelecionada)" readonly="true" width="320px">
+                            <template name="model"><comboitem label="@load(each.label)" value="@load(each.value)"/></template>
+                        </combobox>
                     </row>
                     <row>
                         <label value="UF de nascimento"/>
-                        <textbox id="txtUfNascimentoAluno" width="120px"/>
+                        <textbox value="@bind(vm.ufNascimento)" width="120px"/>
                     </row>
                     <row>
                         <label value="Municipio de nascimento"/>
-                        <textbox id="txtMunicipioNascimentoAluno" width="320px"/>
+                        <textbox value="@bind(vm.municipioNascimento)" width="320px"/>
                     </row>
                     <row>
                         <label value="Pais de origem"/>
-                        <textbox id="txtPaisOrigemAluno" width="120px"/>
+                        <textbox value="@bind(vm.paisOrigem)" width="120px"/>
                     </row>
                 </rows>
             </grid>
 
             <label value="Tipos de Deficiencia (1..N)" style="font-weight:bold;"/>
-            <vbox id="boxDeficienciaAluno" spacing="6px"/>
+            <div children="@load(vm.boxDeficiencia)"/>
 
             <label value="Campos complementares do Leiaute" style="font-weight:bold;"/>
-            <vbox id="boxCamposComplementaresAluno" spacing="6px"/>
+            <div children="@load(vm.boxCamposComplementares)"/>
 
             <hbox spacing="8px" sclass="top-actions">
-                <button id="btnSalvarFormAluno" label="Salvar" sclass="btn"/>
-                <button id="btnVoltarFormAluno" label="Voltar para Listagem" sclass="btn-outline"/>
+                <button label="Salvar"              sclass="btn"         onClick="@command('salvar')"/>
+                <button label="Voltar para Listagem" sclass="btn-outline" onClick="@command('voltar')"/>
             </hbox>
         </vbox>
     </window>
 </zk>
-

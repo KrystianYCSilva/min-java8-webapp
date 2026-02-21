@@ -2,14 +2,16 @@
 <zk>
     <style src="/css/pdf-like.css"/>
 
-    <window id="winIesForm" apply="br.gov.inep.censo.web.zk.modulo.IesComposer"
+    <window id="winIesForm"
+            apply="org.zkoss.bind.BindComposer"
+            viewModel="@id('vm') @init('br.gov.inep.censo.web.zk.modulo.IesViewModel')"
             border="normal" width="100%" sclass="sheet" position="center,top"
             vflex="1">
         <vbox spacing="10px" width="100%">
             <label value="IES" sclass="official-tag"/>
-            <label id="lblTituloFormIes" style="font-size:22px;font-weight:bold;"/>
+            <label value="@load(vm.tituloForm)" style="font-size:22px;font-weight:bold;"/>
 
-            <label id="lblErroFormIes" sclass="alert" visible="false"/>
+            <label sclass="alert" value="@load(vm.erroForm)" visible="@load(vm.erroFormVisivel)"/>
 
             <grid width="100%">
                 <columns>
@@ -17,27 +19,46 @@
                     <column width="64%"/>
                 </columns>
                 <rows>
-                    <row><label value="ID da IES no INEP"/><textbox id="txtIdIesInep" width="220px"/></row>
-                    <row><label value="Nome do laboratorio na IES"/><textbox id="txtNomeLaboratorioIes" width="420px"/></row>
-                    <row><label value="Registro do laboratorio na IES"/><textbox id="txtRegistroLaboratorioIes" width="220px"/></row>
-                    <row><label value="Laboratorio ativo no ano"/><combobox id="cmbAtivoAnoIes" readonly="true" width="220px"/></row>
-                    <row><label value="Descricao das atividades"/><textbox id="txtDescricaoAtividadesIes" width="520px"/></row>
-                    <row><label value="Palavras-chave"/><textbox id="txtPalavrasChaveIes" width="420px"/></row>
-                    <row><label value="Laboratorio de informatica"/><combobox id="cmbLaboratorioInformaticaIes" readonly="true" width="220px"/></row>
-                    <row><label value="Tipo de laboratorio"/><combobox id="cmbTipoLaboratorioIes" readonly="true" width="320px"/></row>
-                    <row><label value="UF do laboratorio"/><combobox id="cmbUfLaboratorioIes" readonly="true" width="280px"/></row>
-                    <row><label value="Municipio do laboratorio (codigo)"/><textbox id="txtMunicipioLaboratorioIes" width="220px"/></row>
+                    <row><label value="ID da IES no INEP"/>                    <textbox value="@bind(vm.idIesInep)" width="220px"/></row>
+                    <row><label value="Nome do laboratorio na IES"/>            <textbox value="@bind(vm.nomeLaboratorio)" width="420px"/></row>
+                    <row><label value="Registro do laboratorio na IES"/>        <textbox value="@bind(vm.registroLaboratorio)" width="220px"/></row>
+                    <row>
+                        <label value="Laboratorio ativo no ano"/>
+                        <combobox value="@bind(vm.ativoAnoSelecionado)" model="@load(vm.itensAtivoAno)" readonly="true" width="220px">
+                            <template name="model"><comboitem label="@load(each.label)" value="@load(each.value)"/></template>
+                        </combobox>
+                    </row>
+                    <row><label value="Descricao das atividades"/>              <textbox value="@bind(vm.descricaoAtividades)" width="520px"/></row>
+                    <row><label value="Palavras-chave"/>                        <textbox value="@bind(vm.palavrasChave)" width="420px"/></row>
+                    <row>
+                        <label value="Laboratorio de informatica"/>
+                        <combobox value="@bind(vm.laboratorioInformaticaSelecionado)" model="@load(vm.itensLaboratorioInformatica)" readonly="true" width="220px">
+                            <template name="model"><comboitem label="@load(each.label)" value="@load(each.value)"/></template>
+                        </combobox>
+                    </row>
+                    <row>
+                        <label value="Tipo de laboratorio"/>
+                        <combobox value="@bind(vm.tipoLaboratorioSelecionado)" model="@load(vm.itensTipoLaboratorio)" readonly="true" width="320px">
+                            <template name="model"><comboitem label="@load(each.label)" value="@load(each.value)"/></template>
+                        </combobox>
+                    </row>
+                    <row>
+                        <label value="UF do laboratorio"/>
+                        <combobox value="@bind(vm.ufLaboratorioSelecionado)" model="@load(vm.itensUfLaboratorio)" readonly="true" width="280px">
+                            <template name="model"><comboitem label="@load(each.label)" value="@load(each.value)"/></template>
+                        </combobox>
+                    </row>
+                    <row><label value="Municipio do laboratorio (codigo)"/>     <textbox value="@bind(vm.municipioLaboratorio)" width="220px"/></row>
                 </rows>
             </grid>
 
             <label value="Campos complementares do Leiaute" style="font-weight:bold;"/>
-            <vbox id="boxCamposComplementaresIes" spacing="6px"/>
+            <div children="@load(vm.boxCamposComplementares)"/>
 
             <hbox spacing="8px" sclass="top-actions">
-                <button id="btnSalvarFormIes" label="Salvar" sclass="btn"/>
-                <button id="btnVoltarFormIes" label="Voltar para Listagem" sclass="btn-outline"/>
+                <button label="Salvar"               sclass="btn"         onClick="@command('salvar')"/>
+                <button label="Voltar para Listagem" sclass="btn-outline"  onClick="@command('voltar')"/>
             </hbox>
         </vbox>
     </window>
 </zk>
-

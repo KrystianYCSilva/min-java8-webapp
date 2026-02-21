@@ -2,47 +2,40 @@
 <zk>
     <style src="/css/pdf-like.css"/>
 
-    <window id="winIesList" apply="br.gov.inep.censo.web.zk.modulo.IesComposer"
+    <window id="winIesList"
+            apply="org.zkoss.bind.BindComposer"
+            viewModel="@id('vm') @init('br.gov.inep.censo.web.zk.modulo.IesViewModel')"
             border="normal" width="100%" sclass="sheet" position="center,top"
             vflex="1">
         <vbox spacing="10px" width="100%">
             <label value="IES" sclass="official-tag"/>
             <label value="Listagem de IES (Registro 11 - Laboratorio)" style="font-size:22px;font-weight:bold;"/>
             <label value="Total de registros:"/>
-            <label id="lblTotalListIes" style="font-weight:bold;"/>
+            <label value="@load(vm.totalLabel)" style="font-weight:bold;"/>
 
-            <label id="lblErroListIes" sclass="alert" visible="false"/>
-            <label id="lblFlashListIes" sclass="ok" visible="false"/>
+            <label sclass="alert" value="@load(vm.erroList)" visible="@load(vm.erroListVisivel)"/>
+            <label sclass="ok"    value="@load(vm.flashList)" visible="@load(vm.flashListVisivel)"/>
 
             <hbox spacing="8px" sclass="top-actions">
-                <button id="btnNovoListIes" label="Incluir via Formulario" sclass="btn"/>
-                <button id="btnExportarListIes" label="Exportar TXT (pipe)" sclass="btn-outline"/>
-                <button id="btnMenuListIes" label="Menu" sclass="btn-outline"/>
+                <button label="Incluir via Formulario"  sclass="btn"         onClick="@command('novo')"/>
+                <button label="Exportar TXT (pipe)"     sclass="btn-outline"  onClick="@command('exportarTodos')"/>
+                <button label="Menu"                    sclass="btn-outline"  onClick="@command('voltar')"/>
             </hbox>
 
             <label value="Importar TXT pipe (1 registro por linha, leiaute Registro 11)"/>
-            <textbox id="txtImportacaoListIes" multiline="true" rows="5" width="100%"/>
-            <button id="btnImportarListIes" label="Importar TXT" sclass="btn"/>
+            <textbox id="txtImportacao" multiline="true" rows="5" width="100%"/>
+            <button label="Importar TXT" sclass="btn"
+                    onClick="@command('importar', conteudo=txtImportacao.value)"/>
 
-            <listbox id="lstIes" width="100%" mold="paging" pageSize="10">
-                <listhead sizable="true">
-                    <listheader label="ID" width="70px"/>
-                    <listheader label="ID IES INEP" width="100px"/>
-                    <listheader label="Nome Laboratorio" width="220px"/>
-                    <listheader label="Registro" width="120px"/>
-                    <listheader label="Tipo" width="180px"/>
-                    <listheader label="UF" width="180px"/>
-                    <listheader label="Municipio" width="120px"/>
-                    <listheader label="Acoes" width="300px"/>
-                </listhead>
-            </listbox>
+            <div children="@load(vm.lstIes)"/>
 
             <hbox spacing="8px" sclass="top-actions">
-                <button id="btnPaginaAnteriorIes" label="Pagina Anterior" sclass="btn-outline"/>
-                <label id="lblPaginacaoListIes"/>
-                <button id="btnPaginaProximaIes" label="Proxima Pagina" sclass="btn-outline"/>
+                <button label="Pagina Anterior" sclass="btn-outline"
+                        disabled="@load(vm.anteriorDisabled)" onClick="@command('paginaAnterior')"/>
+                <label value="@load(vm.paginacaoLabel)"/>
+                <button label="Proxima Pagina"  sclass="btn-outline"
+                        disabled="@load(vm.proximaDisabled)"  onClick="@command('proximaPagina')"/>
             </hbox>
         </vbox>
     </window>
 </zk>
-

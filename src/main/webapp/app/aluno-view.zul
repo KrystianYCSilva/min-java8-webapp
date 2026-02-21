@@ -2,7 +2,9 @@
 <zk>
     <style src="/css/pdf-like.css"/>
 
-    <window id="winAlunoView" apply="br.gov.inep.censo.web.zk.modulo.AlunoComposer"
+    <window id="winAlunoView"
+            apply="org.zkoss.bind.BindComposer"
+            viewModel="@id('vm') @init('br.gov.inep.censo.web.zk.modulo.AlunoViewModel')"
             border="normal" width="100%" sclass="sheet" position="center,top"
             vflex="1">
         <vbox spacing="10px" width="100%">
@@ -10,8 +12,8 @@
             <label value="Visualizar Aluno" style="font-size:22px;font-weight:bold;"/>
 
             <hbox spacing="8px" sclass="top-actions">
-                <button id="btnVoltarViewAluno" label="Voltar para Listagem" sclass="btn-outline"/>
-                <button id="btnEditarViewAluno" label="Alterar" sclass="btn-outline"/>
+                <button label="Voltar para Listagem" sclass="btn-outline" onClick="@command('voltarView')"/>
+                <button label="Alterar"              sclass="btn-outline" onClick="@command('editarView')"/>
             </hbox>
 
             <grid width="100%">
@@ -20,28 +22,22 @@
                     <column width="72%"/>
                 </columns>
                 <rows>
-                    <row><label value="ID"/><label id="lblViewAlunoId"/></row>
-                    <row><label value="ID INEP"/><label id="lblViewAlunoIdInep"/></row>
-                    <row><label value="Nome"/><label id="lblViewAlunoNome"/></row>
-                    <row><label value="CPF"/><label id="lblViewAlunoCpf"/></row>
-                    <row><label value="Data de Nascimento"/><label id="lblViewAlunoNascimento"/></row>
-                    <row><label value="Cor/Raca"/><label id="lblViewAlunoCorRaca"/></row>
-                    <row><label value="Nacionalidade"/><label id="lblViewAlunoNacionalidade"/></row>
-                    <row><label value="UF"/><label id="lblViewAlunoUf"/></row>
-                    <row><label value="Municipio"/><label id="lblViewAlunoMunicipio"/></row>
-                    <row><label value="Pais"/><label id="lblViewAlunoPais"/></row>
-                    <row><label value="Tipos Deficiencia"/><label id="lblViewAlunoDeficiencia"/></row>
+                    <row><label value="ID"/>              <label value="@load(vm.viewId)"/></row>
+                    <row><label value="ID INEP"/>          <label value="@load(vm.viewIdInep)"/></row>
+                    <row><label value="Nome"/>             <label value="@load(vm.viewNome)"/></row>
+                    <row><label value="CPF"/>              <label value="@load(vm.viewCpf)"/></row>
+                    <row><label value="Data de Nascimento"/><label value="@load(vm.viewNascimento)"/></row>
+                    <row><label value="Cor/Raca"/>         <label value="@load(vm.viewCorRaca)"/></row>
+                    <row><label value="Nacionalidade"/>    <label value="@load(vm.viewNacionalidade)"/></row>
+                    <row><label value="UF"/>               <label value="@load(vm.viewUf)"/></row>
+                    <row><label value="Municipio"/>        <label value="@load(vm.viewMunicipio)"/></row>
+                    <row><label value="Pais"/>             <label value="@load(vm.viewPais)"/></row>
+                    <row><label value="Tipos Deficiencia"/><label value="@load(vm.viewDeficiencia)"/></row>
                 </rows>
             </grid>
 
             <label value="Campos complementares do leiaute" style="font-weight:bold;"/>
-            <listbox id="lstViewCamposAluno" width="100%">
-                <listhead>
-                    <listheader label="Campo" width="55%"/>
-                    <listheader label="Valor" width="45%"/>
-                </listhead>
-            </listbox>
+            <div children="@load(vm.lstViewCampos)"/>
         </vbox>
     </window>
 </zk>
-

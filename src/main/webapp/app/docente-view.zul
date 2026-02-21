@@ -2,7 +2,9 @@
 <zk>
     <style src="/css/pdf-like.css"/>
 
-    <window id="winDocenteView" apply="br.gov.inep.censo.web.zk.modulo.DocenteComposer"
+    <window id="winDocenteView"
+            apply="org.zkoss.bind.BindComposer"
+            viewModel="@id('vm') @init('br.gov.inep.censo.web.zk.modulo.DocenteViewModel')"
             border="normal" width="100%" sclass="sheet" position="center,top"
             vflex="1">
         <vbox spacing="10px" width="100%">
@@ -10,8 +12,8 @@
             <label value="Visualizar Docente" style="font-size:22px;font-weight:bold;"/>
 
             <hbox spacing="8px" sclass="top-actions">
-                <button id="btnVoltarViewDocente" label="Voltar para Listagem" sclass="btn-outline"/>
-                <button id="btnEditarViewDocente" label="Alterar" sclass="btn-outline"/>
+                <button label="Voltar para Listagem" sclass="btn-outline" onClick="@command('voltarView')"/>
+                <button label="Alterar"              sclass="btn-outline" onClick="@command('editarView')"/>
             </hbox>
 
             <grid width="100%">
@@ -20,29 +22,23 @@
                     <column width="66%"/>
                 </columns>
                 <rows>
-                    <row><label value="ID"/><label id="lblViewDocenteId"/></row>
-                    <row><label value="ID Docente IES"/><label id="lblViewDocenteIdIes"/></row>
-                    <row><label value="Nome"/><label id="lblViewDocenteNome"/></row>
-                    <row><label value="CPF"/><label id="lblViewDocenteCpf"/></row>
-                    <row><label value="Documento estrangeiro"/><label id="lblViewDocenteDocumento"/></row>
-                    <row><label value="Data de nascimento"/><label id="lblViewDocenteNascimento"/></row>
-                    <row><label value="Cor/Raca"/><label id="lblViewDocenteCorRaca"/></row>
-                    <row><label value="Nacionalidade"/><label id="lblViewDocenteNacionalidade"/></row>
-                    <row><label value="Pais"/><label id="lblViewDocentePais"/></row>
-                    <row><label value="UF"/><label id="lblViewDocenteUf"/></row>
-                    <row><label value="Municipio"/><label id="lblViewDocenteMunicipio"/></row>
-                    <row><label value="Deficiencia/TEA/altas habilidades"/><label id="lblViewDocenteDeficiencia"/></row>
+                    <row><label value="ID"/>                                 <label value="@load(vm.viewId)"/></row>
+                    <row><label value="ID Docente IES"/>                     <label value="@load(vm.viewIdIes)"/></row>
+                    <row><label value="Nome"/>                               <label value="@load(vm.viewNome)"/></row>
+                    <row><label value="CPF"/>                                <label value="@load(vm.viewCpf)"/></row>
+                    <row><label value="Documento estrangeiro"/>              <label value="@load(vm.viewDocumento)"/></row>
+                    <row><label value="Data de nascimento"/>                 <label value="@load(vm.viewNascimento)"/></row>
+                    <row><label value="Cor/Raca"/>                           <label value="@load(vm.viewCorRaca)"/></row>
+                    <row><label value="Nacionalidade"/>                      <label value="@load(vm.viewNacionalidade)"/></row>
+                    <row><label value="Pais"/>                               <label value="@load(vm.viewPais)"/></row>
+                    <row><label value="UF"/>                                 <label value="@load(vm.viewUf)"/></row>
+                    <row><label value="Municipio"/>                          <label value="@load(vm.viewMunicipio)"/></row>
+                    <row><label value="Deficiencia/TEA/altas habilidades"/>  <label value="@load(vm.viewDeficiencia)"/></row>
                 </rows>
             </grid>
 
             <label value="Campos complementares do leiaute" style="font-weight:bold;"/>
-            <listbox id="lstViewCamposDocente" width="100%">
-                <listhead>
-                    <listheader label="Campo" width="55%"/>
-                    <listheader label="Valor" width="45%"/>
-                </listhead>
-            </listbox>
+            <div children="@load(vm.lstViewCampos)"/>
         </vbox>
     </window>
 </zk>
-
