@@ -8,18 +8,6 @@
     <display-name>Censo Educacao Superior 2025</display-name>
 
     <context-param>
-        <param-name>jdbc.url</param-name>
-        <param-value>jdbc:h2:./data/censo2025;DB_CLOSE_DELAY=-1</param-value>
-    </context-param>
-    <context-param>
-        <param-name>jdbc.user</param-name>
-        <param-value>sa</param-value>
-    </context-param>
-    <context-param>
-        <param-name>jdbc.password</param-name>
-        <param-value></param-value>
-    </context-param>
-    <context-param>
         <param-name>contextClass</param-name>
         <param-value>org.springframework.web.context.support.AnnotationConfigWebApplicationContext</param-value>
     </context-param>
@@ -28,9 +16,6 @@
         <param-value>br.gov.inep.censo.config.AppConfig br.gov.inep.censo.config.JpaConfig br.gov.inep.censo.config.SecurityConfig</param-value>
     </context-param>
 
-    <listener>
-        <listener-class>br.gov.inep.censo.config.DatabaseBootstrapListener</listener-class>
-    </listener>
     <listener>
         <listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
     </listener>

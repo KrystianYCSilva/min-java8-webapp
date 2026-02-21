@@ -1,9 +1,10 @@
 package br.gov.inep.censo.config;
 
-import br.gov.inep.censo.spring.datasource.ConnectionFactoryDataSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseBuilder;
+import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseType;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 import javax.sql.DataSource;
@@ -21,6 +22,13 @@ public class AppConfig {
 
     @Bean
     public DataSource dataSource() {
-        return new ConnectionFactoryDataSource();
+        return new EmbeddedDatabaseBuilder()
+                .setType(EmbeddedDatabaseType.H2)
+                .addScript("classpath:db/schema.sql")
+                .addScript("classpath:db/seed.sql")
+                .addScript("classpath:db/seed_layout.sql")
+                .addScript("classpath:db/seed_layout_ies_docente.sql")
+                .addScript("classpath:db/seed_municipio.sql")
+                .build();
     }
 }
