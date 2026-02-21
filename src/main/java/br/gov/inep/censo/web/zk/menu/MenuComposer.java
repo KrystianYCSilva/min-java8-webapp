@@ -2,6 +2,8 @@ package br.gov.inep.censo.web.zk.menu;
 
 import br.gov.inep.censo.model.Usuario;
 import br.gov.inep.censo.web.zk.AbstractBaseComposer;
+import org.zkoss.zk.ui.select.annotation.Listen;
+import org.zkoss.zk.ui.select.annotation.Wire;
 import org.zkoss.zul.Include;
 import org.zkoss.zul.Label;
 import org.zkoss.zul.Window;
@@ -16,20 +18,43 @@ public class MenuComposer extends AbstractBaseComposer {
 
     private static final long serialVersionUID = 1L;
 
+    @Wire
     private Label lblUsuarioHeader;
+
+    @Wire
     private Label lblUsuarioLogin;
+
+    @Wire
     private Label lblFooter;
+
+    @Wire
     private Label btnNavHome;
+
+    @Wire
     private Label btnNavAluno;
+
+    @Wire
     private Label btnNavCurso;
+
+    @Wire
     private Label btnNavCursoAluno;
+
+    @Wire
     private Label btnNavDocente;
+
+    @Wire
     private Label btnNavIes;
+
+    @Wire
     private Include incMain;
+
+    @Wire
     private Window winSub;
+
     private String currentView = "dashboard";
 
-    public void onCreate$winShell() {
+    @Listen("onCreate = #winShell")
+    public void onCreate() {
         HttpSession session = currentSession(false);
         if (session == null) {
             redirect("/login.zul");
@@ -44,7 +69,7 @@ public class MenuComposer extends AbstractBaseComposer {
 
         setLabelValue(lblUsuarioHeader, usuario.getNome());
         setLabelValue(lblUsuarioLogin, usuario.getLogin());
-        setLabelValue(lblFooter, "Censo Superior 2025 | Versao 2.0.0 | Frontend ZK 3.6.2 MVC");
+        setLabelValue(lblFooter, "Censo Superior 2025 | Versao 2.0.0 | Frontend ZK 8.6.0.1 MVC");
 
         HttpServletRequest request = currentRequest();
         String viewParam = request != null ? request.getParameter("view") : null;
@@ -72,31 +97,38 @@ public class MenuComposer extends AbstractBaseComposer {
         }
     }
 
-    public void onClick$btnNavHome() {
+    @Listen("onClick = #btnNavHome")
+    public void onClickBtnNavHome() {
         goShell("dashboard");
     }
 
-    public void onClick$btnNavAluno() {
+    @Listen("onClick = #btnNavAluno")
+    public void onClickBtnNavAluno() {
         goShell("aluno-list");
     }
 
-    public void onClick$btnNavCurso() {
+    @Listen("onClick = #btnNavCurso")
+    public void onClickBtnNavCurso() {
         goShell("curso-list");
     }
 
-    public void onClick$btnNavCursoAluno() {
+    @Listen("onClick = #btnNavCursoAluno")
+    public void onClickBtnNavCursoAluno() {
         goShell("curso-aluno-list");
     }
 
-    public void onClick$btnNavDocente() {
+    @Listen("onClick = #btnNavDocente")
+    public void onClickBtnNavDocente() {
         goShell("docente-list");
     }
 
-    public void onClick$btnNavIes() {
+    @Listen("onClick = #btnNavIes")
+    public void onClickBtnNavIes() {
         goShell("ies-list");
     }
 
-    public void onClick$btnSairHeader() {
+    @Listen("onClick = #btnSairHeader")
+    public void onClickBtnSairHeader() {
         HttpSession session = currentSession(false);
         if (session != null) {
             session.invalidate();
@@ -104,7 +136,8 @@ public class MenuComposer extends AbstractBaseComposer {
         redirect("/login.zul?logout=1");
     }
 
-    public void onClose$winSub() {
+    @Listen("onClose = #winSub")
+    public void onCloseWinSub() {
         goShell(currentView);
     }
 

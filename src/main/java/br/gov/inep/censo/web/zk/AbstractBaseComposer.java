@@ -3,9 +3,10 @@ package br.gov.inep.censo.web.zk;
 import br.gov.inep.censo.util.ValidationUtils;
 import org.zkoss.zk.ui.Execution;
 import org.zkoss.zk.ui.Executions;
-import org.zkoss.zk.ui.util.GenericForwardComposer;
+import org.zkoss.zk.ui.select.SelectorComposer;
 import org.zkoss.zul.Checkbox;
 import org.zkoss.zul.Textbox;
+import org.zkoss.zul.Window;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
@@ -16,7 +17,7 @@ import java.util.Map;
 /**
  * Base de composers ZK com utilitarios comuns para navegacao, flash e parsing.
  */
-public abstract class AbstractBaseComposer extends GenericForwardComposer {
+public abstract class AbstractBaseComposer extends SelectorComposer<Window> {
 
     private static final long serialVersionUID = 1L;
 

@@ -11,6 +11,8 @@ import br.gov.inep.censo.web.zk.AbstractBaseComposer;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.EventListener;
 import org.zkoss.zk.ui.event.Events;
+import org.zkoss.zk.ui.select.annotation.Listen;
+import org.zkoss.zk.ui.select.annotation.Wire;
 import org.zkoss.zul.*;
 
 import java.util.ArrayList;
@@ -30,42 +32,75 @@ public class IesComposer extends AbstractBaseComposer {
     private final CatalogoService catalogoService = new CatalogoService();
 
     // Lista
+    @Wire
     private Label lblErroListIes;
+    @Wire
     private Label lblFlashListIes;
+    @Wire
     private Label lblTotalListIes;
+    @Wire
     private Label lblPaginacaoListIes;
+    @Wire
     private Textbox txtImportacaoListIes;
+    @Wire
     private Listbox lstIes;
+    @Wire
     private Button btnPaginaAnteriorIes;
+    @Wire
     private Button btnPaginaProximaIes;
 
     // Formulario
+    @Wire
     private Label lblErroFormIes;
+    @Wire
     private Label lblTituloFormIes;
+    @Wire
     private Textbox txtIdIesInep;
+    @Wire
     private Textbox txtNomeLaboratorioIes;
+    @Wire
     private Textbox txtRegistroLaboratorioIes;
+    @Wire
     private Combobox cmbAtivoAnoIes;
+    @Wire
     private Textbox txtDescricaoAtividadesIes;
+    @Wire
     private Textbox txtPalavrasChaveIes;
+    @Wire
     private Combobox cmbLaboratorioInformaticaIes;
+    @Wire
     private Combobox cmbTipoLaboratorioIes;
+    @Wire
     private Combobox cmbUfLaboratorioIes;
+    @Wire
     private Textbox txtMunicipioLaboratorioIes;
+    @Wire
     private Vbox boxCamposComplementaresIes;
 
     // Visualizacao
+    @Wire
     private Label lblViewIesId;
+    @Wire
     private Label lblViewIesIdInep;
+    @Wire
     private Label lblViewIesNomeLaboratorio;
+    @Wire
     private Label lblViewIesRegistro;
+    @Wire
     private Label lblViewIesAtivo;
+    @Wire
     private Label lblViewIesDescricao;
+    @Wire
     private Label lblViewIesPalavras;
+    @Wire
     private Label lblViewIesLabInfo;
+    @Wire
     private Label lblViewIesTipo;
+    @Wire
     private Label lblViewIesUf;
+    @Wire
     private Label lblViewIesMunicipio;
+    @Wire
     private Listbox lstViewCamposIes;
 
     private final Map<Long, Textbox> camposComplementares = new LinkedHashMap<Long, Textbox>();
@@ -75,7 +110,8 @@ public class IesComposer extends AbstractBaseComposer {
     private Long iesIdEdicao;
     private Long iesIdVisualizacao;
 
-    public void onCreate$winIesList() {
+    @Listen("onCreate = #winIesList")
+    public void onCreateWinIesList() {
         lblErroListIes.setVisible(false);
         lblErroListIes.setValue("");
 
@@ -96,19 +132,23 @@ public class IesComposer extends AbstractBaseComposer {
         carregarLista();
     }
 
-    public void onClick$btnNovoListIes() {
+    @Listen("onClick = #btnNovoListIes")
+    public void onClickBtnNovoListIes() {
         openSub("ies-list", "ies-form");
     }
 
-    public void onClick$btnMenuListIes() {
+    @Listen("onClick = #btnMenuListIes")
+    public void onClickBtnMenuListIes() {
         goShell("dashboard");
     }
 
-    public void onClick$btnExportarListIes() {
+    @Listen("onClick = #btnExportarListIes")
+    public void onClickBtnExportarListIes() {
         redirect("/api/relatorios/ies.txt");
     }
 
-    public void onClick$btnImportarListIes() {
+    @Listen("onClick = #btnImportarListIes")
+    public void onClickBtnImportarListIes() {
         try {
             String conteudo = txtImportacaoListIes.getValue();
             int total = iesService.importarTxtPipe(conteudo);
@@ -120,19 +160,22 @@ public class IesComposer extends AbstractBaseComposer {
         }
     }
 
-    public void onClick$btnPaginaAnteriorIes() {
+    @Listen("onClick = #btnPaginaAnteriorIes")
+    public void onClickBtnPaginaAnteriorIes() {
         if (paginaAtual > 1) {
             goShell("ies-list", paginaAtual - 1);
         }
     }
 
-    public void onClick$btnPaginaProximaIes() {
+    @Listen("onClick = #btnPaginaProximaIes")
+    public void onClickBtnPaginaProximaIes() {
         if (paginaAtual < totalPaginas) {
             goShell("ies-list", paginaAtual + 1);
         }
     }
 
-    public void onCreate$winIesForm() {
+    @Listen("onCreate = #winIesForm")
+    public void onCreateWinIesForm() {
         iesIdEdicao = parseLongOrNull(currentRequest().getParameter("id"));
         lblErroFormIes.setVisible(false);
         lblErroFormIes.setValue("");
@@ -153,11 +196,13 @@ public class IesComposer extends AbstractBaseComposer {
         }
     }
 
-    public void onClick$btnVoltarFormIes() {
+    @Listen("onClick = #btnVoltarFormIes")
+    public void onClickBtnVoltarFormIes() {
         goShell("ies-list");
     }
 
-    public void onClick$btnSalvarFormIes() {
+    @Listen("onClick = #btnSalvarFormIes")
+    public void onClickBtnSalvarFormIes() {
         lblErroFormIes.setVisible(false);
         lblErroFormIes.setValue("");
 
@@ -192,7 +237,8 @@ public class IesComposer extends AbstractBaseComposer {
         }
     }
 
-    public void onCreate$winIesView() {
+    @Listen("onCreate = #winIesView")
+    public void onCreateWinIesView() {
         iesIdVisualizacao = parseLongOrNull(currentRequest().getParameter("id"));
         if (iesIdVisualizacao == null) {
             goShell("ies-list");
@@ -233,11 +279,13 @@ public class IesComposer extends AbstractBaseComposer {
         }
     }
 
-    public void onClick$btnVoltarViewIes() {
+    @Listen("onClick = #btnVoltarViewIes")
+    public void onClickBtnVoltarViewIes() {
         goShell("ies-list");
     }
 
-    public void onClick$btnEditarViewIes() {
+    @Listen("onClick = #btnEditarViewIes")
+    public void onClickBtnEditarViewIes() {
         openSub("ies-list", "ies-form", iesIdVisualizacao);
     }
 

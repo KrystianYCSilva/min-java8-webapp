@@ -3,6 +3,8 @@ package br.gov.inep.censo.web.zk.auth;
 import br.gov.inep.censo.model.Usuario;
 import br.gov.inep.censo.service.AuthService;
 import br.gov.inep.censo.web.zk.AbstractBaseComposer;
+import org.zkoss.zk.ui.select.annotation.Listen;
+import org.zkoss.zk.ui.select.annotation.Wire;
 import org.zkoss.zul.Label;
 import org.zkoss.zul.Textbox;
 
@@ -17,12 +19,20 @@ public class LoginComposer extends AbstractBaseComposer {
 
     private final AuthService authService = new AuthService();
 
+    @Wire
     private Textbox txtLogin;
+
+    @Wire
     private Textbox txtSenha;
+
+    @Wire
     private Label lblErro;
+
+    @Wire
     private Label lblInfo;
 
-    public void onCreate$winLogin() {
+    @Listen("onCreate = #winLogin")
+    public void onCreate() {
         clearMessages();
         String logout = trimToNull(currentRequest().getParameter("logout"));
         if (logout != null) {
@@ -31,7 +41,8 @@ public class LoginComposer extends AbstractBaseComposer {
         }
     }
 
-    public void onClick$btnEntrar() {
+    @Listen("onClick = #btnEntrar")
+    public void onClickBtnEntrar() {
         clearMessages();
 
         String login = trimToNull(txtLogin.getValue());
@@ -61,7 +72,8 @@ public class LoginComposer extends AbstractBaseComposer {
         }
     }
 
-    public void onClick$btnVoltar() {
+    @Listen("onClick = #btnVoltar")
+    public void onClickBtnVoltar() {
         redirect("/home.zul");
     }
 

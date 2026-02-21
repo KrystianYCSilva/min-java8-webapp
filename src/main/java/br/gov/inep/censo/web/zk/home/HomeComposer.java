@@ -1,6 +1,8 @@
 package br.gov.inep.censo.web.zk.home;
 
 import br.gov.inep.censo.web.zk.AbstractBaseComposer;
+import org.zkoss.zk.ui.select.annotation.Listen;
+import org.zkoss.zk.ui.select.annotation.Wire;
 import org.zkoss.zul.Label;
 
 /**
@@ -10,9 +12,11 @@ public class HomeComposer extends AbstractBaseComposer {
 
     private static final long serialVersionUID = 1L;
 
+    @Wire
     private Label lblFlash;
 
-    public void onCreate$winHome() {
+    @Listen("onCreate = #winHome")
+    public void onCreate() {
         String flash = consumeFlash("flashHomeMessage");
         if (flash == null) {
             lblFlash.setVisible(false);
@@ -23,11 +27,13 @@ public class HomeComposer extends AbstractBaseComposer {
         lblFlash.setValue(flash);
     }
 
-    public void onClick$btnEntrar() {
+    @Listen("onClick = #btnEntrar")
+    public void onClickBtnEntrar() {
         redirect("/login.zul");
     }
 
-    public void onClick$btnMenu() {
+    @Listen("onClick = #btnMenu")
+    public void onClickBtnMenu() {
         goShell("dashboard");
     }
 }

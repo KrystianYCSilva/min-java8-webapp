@@ -42,47 +42,62 @@
 
     <bean id="alunoService" class="br.gov.inep.censo.service.AlunoService">
         <constructor-arg>
-            <bean class="br.gov.inep.censo.dao.AlunoDAO"/>
-        </constructor-arg>
-        <constructor-arg>
-            <bean class="br.gov.inep.censo.dao.LayoutCampoDAO"/>
+            <bean class="br.gov.inep.censo.repository.LayoutCampoValueRepository"/>
         </constructor-arg>
         <constructor-arg ref="alunoRepository"/>
+        <constructor-arg>
+            <bean class="br.gov.inep.censo.repository.OpcaoVinculoRepository"/>
+        </constructor-arg>
+        <constructor-arg ref="transactionManager"/>
+        <constructor-arg ref="entityManagerFactory"/>
     </bean>
 
     <bean id="cursoService" class="br.gov.inep.censo.service.CursoService">
         <constructor-arg>
-            <bean class="br.gov.inep.censo.dao.CursoDAO"/>
-        </constructor-arg>
-        <constructor-arg>
-            <bean class="br.gov.inep.censo.dao.LayoutCampoDAO"/>
+            <bean class="br.gov.inep.censo.repository.LayoutCampoValueRepository"/>
         </constructor-arg>
         <constructor-arg ref="cursoRepository"/>
+        <constructor-arg>
+            <bean class="br.gov.inep.censo.repository.OpcaoVinculoRepository"/>
+        </constructor-arg>
+        <constructor-arg ref="transactionManager"/>
+        <constructor-arg ref="entityManagerFactory"/>
     </bean>
 
     <bean id="docenteService" class="br.gov.inep.censo.service.DocenteService">
         <constructor-arg>
-            <bean class="br.gov.inep.censo.dao.DocenteDAO"/>
-        </constructor-arg>
-        <constructor-arg>
-            <bean class="br.gov.inep.censo.dao.LayoutCampoDAO"/>
-        </constructor-arg>
-        <constructor-arg>
-            <bean class="br.gov.inep.censo.dao.MunicipioDAO"/>
+            <bean class="br.gov.inep.censo.repository.LayoutCampoValueRepository"/>
         </constructor-arg>
         <constructor-arg ref="docenteRepository"/>
+        <constructor-arg ref="municipioRepository"/>
+        <constructor-arg ref="transactionManager"/>
+        <constructor-arg ref="entityManagerFactory"/>
     </bean>
 
     <bean id="iesService" class="br.gov.inep.censo.service.IesService">
         <constructor-arg>
-            <bean class="br.gov.inep.censo.dao.IesDAO"/>
-        </constructor-arg>
-        <constructor-arg>
-            <bean class="br.gov.inep.censo.dao.LayoutCampoDAO"/>
-        </constructor-arg>
-        <constructor-arg>
-            <bean class="br.gov.inep.censo.dao.MunicipioDAO"/>
+            <bean class="br.gov.inep.censo.repository.LayoutCampoValueRepository"/>
         </constructor-arg>
         <constructor-arg ref="iesRepository"/>
+        <constructor-arg ref="municipioRepository"/>
+        <constructor-arg ref="transactionManager"/>
+        <constructor-arg ref="entityManagerFactory"/>
+    </bean>
+
+    <bean id="cursoAlunoService" class="br.gov.inep.censo.service.CursoAlunoService">
+        <constructor-arg ref="cursoAlunoRepository"/>
+        <constructor-arg>
+            <bean class="br.gov.inep.censo.repository.OpcaoVinculoRepository"/>
+        </constructor-arg>
+        <constructor-arg>
+            <bean class="br.gov.inep.censo.repository.LayoutCampoValueRepository"/>
+        </constructor-arg>
+        <constructor-arg ref="transactionManager"/>
+        <constructor-arg ref="entityManagerFactory"/>
+    </bean>
+
+    <bean id="catalogoService" class="br.gov.inep.censo.service.CatalogoService">
+        <constructor-arg ref="opcaoDominioRepository"/>
+        <constructor-arg ref="layoutCampoRepository"/>
     </bean>
 </beans>

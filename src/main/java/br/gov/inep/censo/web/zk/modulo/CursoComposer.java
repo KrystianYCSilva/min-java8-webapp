@@ -13,6 +13,8 @@ import br.gov.inep.censo.web.zk.AbstractBaseComposer;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.EventListener;
 import org.zkoss.zk.ui.event.Events;
+import org.zkoss.zk.ui.select.annotation.Listen;
+import org.zkoss.zk.ui.select.annotation.Wire;
 import org.zkoss.zul.*;
 
 import java.util.*;
@@ -29,35 +31,35 @@ public class CursoComposer extends AbstractBaseComposer {
     private final CatalogoService catalogoService = new CatalogoService();
 
     // Lista
-    private Label lblErroListCurso;
-    private Label lblFlashListCurso;
-    private Label lblTotalListCurso;
-    private Label lblPaginacaoListCurso;
-    private Textbox txtImportacaoListCurso;
-    private Listbox lstCursos;
-    private Button btnPaginaAnteriorCurso;
-    private Button btnPaginaProximaCurso;
+    @Wire private Label lblErroListCurso;
+    @Wire private Label lblFlashListCurso;
+    @Wire private Label lblTotalListCurso;
+    @Wire private Label lblPaginacaoListCurso;
+    @Wire private Textbox txtImportacaoListCurso;
+    @Wire private Listbox lstCursos;
+    @Wire private Button btnPaginaAnteriorCurso;
+    @Wire private Button btnPaginaProximaCurso;
 
     // Formulario
-    private Label lblErroFormCurso;
-    private Label lblTituloFormCurso;
-    private Textbox txtCodigoCursoEmec;
-    private Textbox txtNomeCurso;
-    private Combobox cmbNivelAcademicoCurso;
-    private Combobox cmbFormatoOfertaCurso;
-    private Combobox cmbTeveAlunoVinculadoCurso;
-    private Vbox boxRecursosCurso;
-    private Vbox boxCamposComplementaresCurso;
+    @Wire private Label lblErroFormCurso;
+    @Wire private Label lblTituloFormCurso;
+    @Wire private Textbox txtCodigoCursoEmec;
+    @Wire private Textbox txtNomeCurso;
+    @Wire private Combobox cmbNivelAcademicoCurso;
+    @Wire private Combobox cmbFormatoOfertaCurso;
+    @Wire private Combobox cmbTeveAlunoVinculadoCurso;
+    @Wire private Vbox boxRecursosCurso;
+    @Wire private Vbox boxCamposComplementaresCurso;
 
     // Visualizacao
-    private Label lblViewCursoId;
-    private Label lblViewCursoCodigo;
-    private Label lblViewCursoNome;
-    private Label lblViewCursoNivel;
-    private Label lblViewCursoFormato;
-    private Label lblViewCursoVinculado;
-    private Label lblViewCursoRecursos;
-    private Listbox lstViewCamposCurso;
+    @Wire private Label lblViewCursoId;
+    @Wire private Label lblViewCursoCodigo;
+    @Wire private Label lblViewCursoNome;
+    @Wire private Label lblViewCursoNivel;
+    @Wire private Label lblViewCursoFormato;
+    @Wire private Label lblViewCursoVinculado;
+    @Wire private Label lblViewCursoRecursos;
+    @Wire private Listbox lstViewCamposCurso;
 
     private final Map<Long, Checkbox> checksRecursos = new LinkedHashMap<Long, Checkbox>();
     private final Map<Long, Textbox> camposComplementares = new LinkedHashMap<Long, Textbox>();
@@ -67,7 +69,8 @@ public class CursoComposer extends AbstractBaseComposer {
     private Long cursoIdEdicao;
     private Long cursoIdVisualizacao;
 
-    public void onCreate$winCursoList() {
+    @Listen("onCreate = #winCursoList")
+    public void onCreateCursoList() {
         lblErroListCurso.setVisible(false);
         lblErroListCurso.setValue("");
 
@@ -88,19 +91,23 @@ public class CursoComposer extends AbstractBaseComposer {
         carregarLista();
     }
 
-    public void onClick$btnNovoListCurso() {
+    @Listen("onClick = #btnNovoListCurso")
+    public void onClickBtnNovoListCurso() {
         openSub("curso-list", "curso-form");
     }
 
-    public void onClick$btnMenuListCurso() {
+    @Listen("onClick = #btnMenuListCurso")
+    public void onClickBtnMenuListCurso() {
         goShell("dashboard");
     }
 
-    public void onClick$btnExportarListCurso() {
+    @Listen("onClick = #btnExportarListCurso")
+    public void onClickBtnExportarListCurso() {
         redirect("/api/relatorios/cursos.txt");
     }
 
-    public void onClick$btnImportarListCurso() {
+    @Listen("onClick = #btnImportarListCurso")
+    public void onClickBtnImportarListCurso() {
         try {
             String conteudo = txtImportacaoListCurso.getValue();
             int total = cursoService.importarTxtPipe(conteudo);
@@ -112,19 +119,22 @@ public class CursoComposer extends AbstractBaseComposer {
         }
     }
 
-    public void onClick$btnPaginaAnteriorCurso() {
+    @Listen("onClick = #btnPaginaAnteriorCurso")
+    public void onClickBtnPaginaAnteriorCurso() {
         if (paginaAtual > 1) {
             goShell("curso-list", paginaAtual - 1);
         }
     }
 
-    public void onClick$btnPaginaProximaCurso() {
+    @Listen("onClick = #btnPaginaProximaCurso")
+    public void onClickBtnPaginaProximaCurso() {
         if (paginaAtual < totalPaginas) {
             goShell("curso-list", paginaAtual + 1);
         }
     }
 
-    public void onCreate$winCursoForm() {
+    @Listen("onCreate = #winCursoForm")
+    public void onCreateCursoForm() {
         cursoIdEdicao = parseLongOrNull(currentRequest().getParameter("id"));
         lblErroFormCurso.setVisible(false);
         lblErroFormCurso.setValue("");
@@ -146,11 +156,13 @@ public class CursoComposer extends AbstractBaseComposer {
         }
     }
 
-    public void onClick$btnVoltarFormCurso() {
+    @Listen("onClick = #btnVoltarFormCurso")
+    public void onClickBtnVoltarFormCurso() {
         goShell("curso-list");
     }
 
-    public void onClick$btnSalvarFormCurso() {
+    @Listen("onClick = #btnSalvarFormCurso")
+    public void onClickBtnSalvarFormCurso() {
         lblErroFormCurso.setVisible(false);
         lblErroFormCurso.setValue("");
 
@@ -181,7 +193,8 @@ public class CursoComposer extends AbstractBaseComposer {
         }
     }
 
-    public void onCreate$winCursoView() {
+    @Listen("onCreate = #winCursoView")
+    public void onCreateCursoView() {
         cursoIdVisualizacao = parseLongOrNull(currentRequest().getParameter("id"));
         if (cursoIdVisualizacao == null) {
             goShell("curso-list");
@@ -218,11 +231,13 @@ public class CursoComposer extends AbstractBaseComposer {
         }
     }
 
-    public void onClick$btnVoltarViewCurso() {
+    @Listen("onClick = #btnVoltarViewCurso")
+    public void onClickBtnVoltarViewCurso() {
         goShell("curso-list");
     }
 
-    public void onClick$btnEditarViewCurso() {
+    @Listen("onClick = #btnEditarViewCurso")
+    public void onClickBtnEditarViewCurso() {
         openSub("curso-list", "curso-form", cursoIdVisualizacao);
     }
 

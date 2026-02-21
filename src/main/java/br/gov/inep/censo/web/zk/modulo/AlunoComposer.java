@@ -13,6 +13,8 @@ import br.gov.inep.censo.web.zk.AbstractBaseComposer;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.EventListener;
 import org.zkoss.zk.ui.event.Events;
+import org.zkoss.zk.ui.select.annotation.Listen;
+import org.zkoss.zk.ui.select.annotation.Wire;
 import org.zkoss.zul.*;
 
 import java.sql.Date;
@@ -30,43 +32,43 @@ public class AlunoComposer extends AbstractBaseComposer {
     private final CatalogoService catalogoService = new CatalogoService();
 
     // Lista
-    private Label lblErroListAluno;
-    private Label lblFlashListAluno;
-    private Label lblTotalListAluno;
-    private Label lblPaginacaoListAluno;
-    private Textbox txtImportacaoListAluno;
-    private Listbox lstAlunos;
-    private Button btnPaginaAnteriorAluno;
-    private Button btnPaginaProximaAluno;
+    @Wire private Label lblErroListAluno;
+    @Wire private Label lblFlashListAluno;
+    @Wire private Label lblTotalListAluno;
+    @Wire private Label lblPaginacaoListAluno;
+    @Wire private Textbox txtImportacaoListAluno;
+    @Wire private Listbox lstAlunos;
+    @Wire private Button btnPaginaAnteriorAluno;
+    @Wire private Button btnPaginaProximaAluno;
 
     // Formulario
-    private Label lblErroFormAluno;
-    private Label lblTituloFormAluno;
-    private Textbox txtIdAlunoInep;
-    private Textbox txtNomeAluno;
-    private Textbox txtCpfAluno;
-    private Datebox dtNascimentoAluno;
-    private Combobox cmbCorRacaAluno;
-    private Combobox cmbNacionalidadeAluno;
-    private Textbox txtUfNascimentoAluno;
-    private Textbox txtMunicipioNascimentoAluno;
-    private Textbox txtPaisOrigemAluno;
-    private Vbox boxDeficienciaAluno;
-    private Vbox boxCamposComplementaresAluno;
+    @Wire private Label lblErroFormAluno;
+    @Wire private Label lblTituloFormAluno;
+    @Wire private Textbox txtIdAlunoInep;
+    @Wire private Textbox txtNomeAluno;
+    @Wire private Textbox txtCpfAluno;
+    @Wire private Datebox dtNascimentoAluno;
+    @Wire private Combobox cmbCorRacaAluno;
+    @Wire private Combobox cmbNacionalidadeAluno;
+    @Wire private Textbox txtUfNascimentoAluno;
+    @Wire private Textbox txtMunicipioNascimentoAluno;
+    @Wire private Textbox txtPaisOrigemAluno;
+    @Wire private Vbox boxDeficienciaAluno;
+    @Wire private Vbox boxCamposComplementaresAluno;
 
     // Visualizacao
-    private Label lblViewAlunoId;
-    private Label lblViewAlunoIdInep;
-    private Label lblViewAlunoNome;
-    private Label lblViewAlunoCpf;
-    private Label lblViewAlunoNascimento;
-    private Label lblViewAlunoCorRaca;
-    private Label lblViewAlunoNacionalidade;
-    private Label lblViewAlunoUf;
-    private Label lblViewAlunoMunicipio;
-    private Label lblViewAlunoPais;
-    private Label lblViewAlunoDeficiencia;
-    private Listbox lstViewCamposAluno;
+    @Wire private Label lblViewAlunoId;
+    @Wire private Label lblViewAlunoIdInep;
+    @Wire private Label lblViewAlunoNome;
+    @Wire private Label lblViewAlunoCpf;
+    @Wire private Label lblViewAlunoNascimento;
+    @Wire private Label lblViewAlunoCorRaca;
+    @Wire private Label lblViewAlunoNacionalidade;
+    @Wire private Label lblViewAlunoUf;
+    @Wire private Label lblViewAlunoMunicipio;
+    @Wire private Label lblViewAlunoPais;
+    @Wire private Label lblViewAlunoDeficiencia;
+    @Wire private Listbox lstViewCamposAluno;
 
     private final Map<Long, Checkbox> checksDeficiencia = new LinkedHashMap<Long, Checkbox>();
     private final Map<Long, Textbox> camposComplementares = new LinkedHashMap<Long, Textbox>();
@@ -76,7 +78,8 @@ public class AlunoComposer extends AbstractBaseComposer {
     private Long alunoIdEdicao;
     private Long alunoIdVisualizacao;
 
-    public void onCreate$winAlunoList() {
+    @Listen("onCreate = #winAlunoList")
+    public void onCreateAlunoList() {
         lblErroListAluno.setVisible(false);
         lblErroListAluno.setValue("");
 
@@ -97,19 +100,23 @@ public class AlunoComposer extends AbstractBaseComposer {
         carregarLista();
     }
 
-    public void onClick$btnNovoListAluno() {
+    @Listen("onClick = #btnNovoListAluno")
+    public void onClickBtnNovoListAluno() {
         openSub("aluno-list", "aluno-form");
     }
 
-    public void onClick$btnMenuListAluno() {
+    @Listen("onClick = #btnMenuListAluno")
+    public void onClickBtnMenuListAluno() {
         goShell("dashboard");
     }
 
-    public void onClick$btnExportarListAluno() {
+    @Listen("onClick = #btnExportarListAluno")
+    public void onClickBtnExportarListAluno() {
         redirect("/api/relatorios/alunos.txt");
     }
 
-    public void onClick$btnImportarListAluno() {
+    @Listen("onClick = #btnImportarListAluno")
+    public void onClickBtnImportarListAluno() {
         try {
             String conteudo = txtImportacaoListAluno.getValue();
             int total = alunoService.importarTxtPipe(conteudo);
@@ -121,19 +128,22 @@ public class AlunoComposer extends AbstractBaseComposer {
         }
     }
 
-    public void onClick$btnPaginaAnteriorAluno() {
+    @Listen("onClick = #btnPaginaAnteriorAluno")
+    public void onClickBtnPaginaAnteriorAluno() {
         if (paginaAtual > 1) {
             goShell("aluno-list", paginaAtual - 1);
         }
     }
 
-    public void onClick$btnPaginaProximaAluno() {
+    @Listen("onClick = #btnPaginaProximaAluno")
+    public void onClickBtnPaginaProximaAluno() {
         if (paginaAtual < totalPaginas) {
             goShell("aluno-list", paginaAtual + 1);
         }
     }
 
-    public void onCreate$winAlunoForm() {
+    @Listen("onCreate = #winAlunoForm")
+    public void onCreateAlunoForm() {
         alunoIdEdicao = parseLongOrNull(currentRequest().getParameter("id"));
         lblErroFormAluno.setVisible(false);
         lblErroFormAluno.setValue("");
@@ -155,11 +165,13 @@ public class AlunoComposer extends AbstractBaseComposer {
         }
     }
 
-    public void onClick$btnVoltarFormAluno() {
+    @Listen("onClick = #btnVoltarFormAluno")
+    public void onClickBtnVoltarFormAluno() {
         goShell("aluno-list");
     }
 
-    public void onClick$btnSalvarFormAluno() {
+    @Listen("onClick = #btnSalvarFormAluno")
+    public void onClickBtnSalvarFormAluno() {
         lblErroFormAluno.setVisible(false);
         lblErroFormAluno.setValue("");
 
@@ -206,7 +218,8 @@ public class AlunoComposer extends AbstractBaseComposer {
         }
     }
 
-    public void onCreate$winAlunoView() {
+    @Listen("onCreate = #winAlunoView")
+    public void onCreateAlunoView() {
         alunoIdVisualizacao = parseLongOrNull(currentRequest().getParameter("id"));
         if (alunoIdVisualizacao == null) {
             goShell("aluno-list");
@@ -247,11 +260,13 @@ public class AlunoComposer extends AbstractBaseComposer {
         }
     }
 
-    public void onClick$btnVoltarViewAluno() {
+    @Listen("onClick = #btnVoltarViewAluno")
+    public void onClickBtnVoltarViewAluno() {
         goShell("aluno-list");
     }
 
-    public void onClick$btnEditarViewAluno() {
+    @Listen("onClick = #btnEditarViewAluno")
+    public void onClickBtnEditarViewAluno() {
         openSub("aluno-list", "aluno-form", alunoIdVisualizacao);
     }
 

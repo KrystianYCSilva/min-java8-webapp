@@ -8,6 +8,8 @@ import br.gov.inep.censo.service.CatalogoService;
 import br.gov.inep.censo.service.CursoAlunoService;
 import br.gov.inep.censo.service.CursoService;
 import br.gov.inep.censo.web.zk.AbstractBaseComposer;
+import org.zkoss.zk.ui.select.annotation.Listen;
+import org.zkoss.zk.ui.select.annotation.Wire;
 import org.zkoss.zul.*;
 
 import java.util.ArrayList;
@@ -28,41 +30,71 @@ public class CursoAlunoComposer extends AbstractBaseComposer {
     private final CatalogoService catalogoService = new CatalogoService();
 
     // Lista
+    @Wire
     private Label lblErroListCursoAluno;
+    @Wire
     private Label lblFlashListCursoAluno;
+    @Wire
     private Listbox lstCursoAluno;
 
     // Formulario
+    @Wire
     private Label lblErroFormCursoAluno;
+    @Wire
     private Combobox cmbAlunoCursoAluno;
+    @Wire
     private Combobox cmbCursoCursoAluno;
+    @Wire
     private Textbox txtIdAlunoIesCursoAluno;
+    @Wire
     private Textbox txtPeriodoRefCursoAluno;
+    @Wire
     private Textbox txtCodigoPoloCursoAluno;
+    @Wire
     private Combobox cmbTurnoCursoAluno;
+    @Wire
     private Combobox cmbSituacaoCursoAluno;
+    @Wire
     private Textbox txtCursoOrigemCursoAluno;
+    @Wire
     private Textbox txtSemestreConclusaoCursoAluno;
+    @Wire
     private Combobox cmbAlunoParforCursoAluno;
+    @Wire
     private Combobox cmbSegundaLicCursoAluno;
+    @Wire
     private Combobox cmbTipoSegundaLicCursoAluno;
+    @Wire
     private Textbox txtSemestreIngressoCursoAluno;
-
+    @Wire
     private Combobox cmbFormaVestibularCursoAluno;
+    @Wire
     private Combobox cmbFormaEnemCursoAluno;
+    @Wire
     private Combobox cmbFormaAvaliacaoSeriadaCursoAluno;
+    @Wire
     private Combobox cmbFormaSelecaoSimplificadaCursoAluno;
+    @Wire
     private Combobox cmbFormaEgressoBiLiCursoAluno;
+    @Wire
     private Combobox cmbFormaPecGCursoAluno;
+    @Wire
     private Combobox cmbFormaTransfExOfficioCursoAluno;
+    @Wire
     private Combobox cmbFormaDecisaoJudicialCursoAluno;
+    @Wire
     private Combobox cmbFormaVagasRemanescentesCursoAluno;
+    @Wire
     private Combobox cmbFormaProgramasEspeciaisCursoAluno;
-
+    @Wire
     private Vbox boxFinanciamentoCursoAluno;
+    @Wire
     private Vbox boxApoioCursoAluno;
+    @Wire
     private Vbox boxAtividadeCursoAluno;
+    @Wire
     private Vbox boxReservaCursoAluno;
+    @Wire
     private Vbox boxCamposComplementaresCursoAluno;
 
     private final Map<Long, Checkbox> checksFinanciamento = new LinkedHashMap<Long, Checkbox>();
@@ -71,7 +103,8 @@ public class CursoAlunoComposer extends AbstractBaseComposer {
     private final Map<Long, Checkbox> checksReserva = new LinkedHashMap<Long, Checkbox>();
     private final Map<Long, Textbox> camposComplementares = new LinkedHashMap<Long, Textbox>();
 
-    public void onCreate$winCursoAlunoList() {
+    @Listen("onCreate = #winCursoAlunoList")
+    public void onCreateWinCursoAlunoList() {
         lblErroListCursoAluno.setVisible(false);
         lblErroListCursoAluno.setValue("");
 
@@ -87,15 +120,18 @@ public class CursoAlunoComposer extends AbstractBaseComposer {
         carregarLista();
     }
 
-    public void onClick$btnNovoListCursoAluno() {
+    @Listen("onClick = #btnNovoListCursoAluno")
+    public void onClickBtnNovoListCursoAluno() {
         openSub("curso-aluno-list", "curso-aluno-form");
     }
 
-    public void onClick$btnMenuListCursoAluno() {
+    @Listen("onClick = #btnMenuListCursoAluno")
+    public void onClickBtnMenuListCursoAluno() {
         goShell("dashboard");
     }
 
-    public void onCreate$winCursoAlunoForm() {
+    @Listen("onCreate = #winCursoAlunoForm")
+    public void onCreateWinCursoAlunoForm() {
         lblErroFormCursoAluno.setVisible(false);
         lblErroFormCursoAluno.setValue("");
 
@@ -109,11 +145,13 @@ public class CursoAlunoComposer extends AbstractBaseComposer {
         }
     }
 
-    public void onClick$btnVoltarFormCursoAluno() {
+    @Listen("onClick = #btnVoltarFormCursoAluno")
+    public void onClickBtnVoltarFormCursoAluno() {
         goShell("curso-aluno-list");
     }
 
-    public void onClick$btnSalvarFormCursoAluno() {
+    @Listen("onClick = #btnSalvarFormCursoAluno")
+    public void onClickBtnSalvarFormCursoAluno() {
         lblErroFormCursoAluno.setVisible(false);
         lblErroFormCursoAluno.setValue("");
 

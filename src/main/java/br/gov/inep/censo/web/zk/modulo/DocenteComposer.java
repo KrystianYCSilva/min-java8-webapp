@@ -13,6 +13,8 @@ import br.gov.inep.censo.web.zk.AbstractBaseComposer;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.EventListener;
 import org.zkoss.zk.ui.event.Events;
+import org.zkoss.zk.ui.select.annotation.Listen;
+import org.zkoss.zk.ui.select.annotation.Wire;
 import org.zkoss.zul.*;
 
 import java.sql.Date;
@@ -33,44 +35,79 @@ public class DocenteComposer extends AbstractBaseComposer {
     private final CatalogoService catalogoService = new CatalogoService();
 
     // Lista
+    @Wire
     private Label lblErroListDocente;
+    @Wire
     private Label lblFlashListDocente;
+    @Wire
     private Label lblTotalListDocente;
+    @Wire
     private Label lblPaginacaoListDocente;
+    @Wire
     private Textbox txtImportacaoListDocente;
+    @Wire
     private Listbox lstDocentes;
+    @Wire
     private Button btnPaginaAnteriorDocente;
+    @Wire
     private Button btnPaginaProximaDocente;
 
     // Formulario
+    @Wire
     private Label lblErroFormDocente;
+    @Wire
     private Label lblTituloFormDocente;
+    @Wire
     private Textbox txtIdDocenteIes;
+    @Wire
     private Textbox txtNomeDocente;
+    @Wire
     private Textbox txtCpfDocente;
+    @Wire
     private Textbox txtDocumentoEstrangeiroDocente;
+    @Wire
     private Datebox dtNascimentoDocente;
+    @Wire
     private Combobox cmbCorRacaDocente;
+    @Wire
     private Combobox cmbNacionalidadeDocente;
+    @Wire
     private Combobox cmbPaisOrigemDocente;
+    @Wire
     private Combobox cmbUfNascimentoDocente;
+    @Wire
     private Textbox txtMunicipioNascimentoDocente;
+    @Wire
     private Combobox cmbDeficienciaDocente;
+    @Wire
     private Vbox boxCamposComplementaresDocente;
 
     // Visualizacao
+    @Wire
     private Label lblViewDocenteId;
+    @Wire
     private Label lblViewDocenteIdIes;
+    @Wire
     private Label lblViewDocenteNome;
+    @Wire
     private Label lblViewDocenteCpf;
+    @Wire
     private Label lblViewDocenteDocumento;
+    @Wire
     private Label lblViewDocenteNascimento;
+    @Wire
     private Label lblViewDocenteCorRaca;
+    @Wire
     private Label lblViewDocenteNacionalidade;
+    @Wire
     private Label lblViewDocentePais;
+    @Wire
     private Label lblViewDocenteUf;
+    @Wire
     private Label lblViewDocenteMunicipio;
+    @Wire
     private Label lblViewDocenteDeficiencia;
+    @Wire
     private Listbox lstViewCamposDocente;
 
     private final Map<Long, Textbox> camposComplementares = new LinkedHashMap<Long, Textbox>();
@@ -80,7 +117,8 @@ public class DocenteComposer extends AbstractBaseComposer {
     private Long docenteIdEdicao;
     private Long docenteIdVisualizacao;
 
-    public void onCreate$winDocenteList() {
+    @Listen("onCreate = #winDocenteList")
+    public void onCreateWinDocenteList() {
         lblErroListDocente.setVisible(false);
         lblErroListDocente.setValue("");
 
@@ -101,19 +139,23 @@ public class DocenteComposer extends AbstractBaseComposer {
         carregarLista();
     }
 
-    public void onClick$btnNovoListDocente() {
+    @Listen("onClick = #btnNovoListDocente")
+    public void onClickBtnNovoListDocente() {
         openSub("docente-list", "docente-form");
     }
 
-    public void onClick$btnMenuListDocente() {
+    @Listen("onClick = #btnMenuListDocente")
+    public void onClickBtnMenuListDocente() {
         goShell("dashboard");
     }
 
-    public void onClick$btnExportarListDocente() {
+    @Listen("onClick = #btnExportarListDocente")
+    public void onClickBtnExportarListDocente() {
         redirect("/api/relatorios/docentes.txt");
     }
 
-    public void onClick$btnImportarListDocente() {
+    @Listen("onClick = #btnImportarListDocente")
+    public void onClickBtnImportarListDocente() {
         try {
             String conteudo = txtImportacaoListDocente.getValue();
             int total = docenteService.importarTxtPipe(conteudo);
@@ -125,19 +167,22 @@ public class DocenteComposer extends AbstractBaseComposer {
         }
     }
 
-    public void onClick$btnPaginaAnteriorDocente() {
+    @Listen("onClick = #btnPaginaAnteriorDocente")
+    public void onClickBtnPaginaAnteriorDocente() {
         if (paginaAtual > 1) {
             goShell("docente-list", paginaAtual - 1);
         }
     }
 
-    public void onClick$btnPaginaProximaDocente() {
+    @Listen("onClick = #btnPaginaProximaDocente")
+    public void onClickBtnPaginaProximaDocente() {
         if (paginaAtual < totalPaginas) {
             goShell("docente-list", paginaAtual + 1);
         }
     }
 
-    public void onCreate$winDocenteForm() {
+    @Listen("onCreate = #winDocenteForm")
+    public void onCreateWinDocenteForm() {
         docenteIdEdicao = parseLongOrNull(currentRequest().getParameter("id"));
         lblErroFormDocente.setVisible(false);
         lblErroFormDocente.setValue("");
@@ -158,11 +203,13 @@ public class DocenteComposer extends AbstractBaseComposer {
         }
     }
 
-    public void onClick$btnVoltarFormDocente() {
+    @Listen("onClick = #btnVoltarFormDocente")
+    public void onClickBtnVoltarFormDocente() {
         goShell("docente-list");
     }
 
-    public void onClick$btnSalvarFormDocente() {
+    @Listen("onClick = #btnSalvarFormDocente")
+    public void onClickBtnSalvarFormDocente() {
         lblErroFormDocente.setVisible(false);
         lblErroFormDocente.setValue("");
 
@@ -209,7 +256,8 @@ public class DocenteComposer extends AbstractBaseComposer {
         }
     }
 
-    public void onCreate$winDocenteView() {
+    @Listen("onCreate = #winDocenteView")
+    public void onCreateWinDocenteView() {
         docenteIdVisualizacao = parseLongOrNull(currentRequest().getParameter("id"));
         if (docenteIdVisualizacao == null) {
             goShell("docente-list");
@@ -259,11 +307,13 @@ public class DocenteComposer extends AbstractBaseComposer {
         }
     }
 
-    public void onClick$btnVoltarViewDocente() {
+    @Listen("onClick = #btnVoltarViewDocente")
+    public void onClickBtnVoltarViewDocente() {
         goShell("docente-list");
     }
 
-    public void onClick$btnEditarViewDocente() {
+    @Listen("onClick = #btnEditarViewDocente")
+    public void onClickBtnEditarViewDocente() {
         openSub("docente-list", "docente-form", docenteIdVisualizacao);
     }
 
